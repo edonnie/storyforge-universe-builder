@@ -245,14 +245,21 @@ Would you like me to elaborate on any of these aspects?`
         <div className="flex h-full">
           {/* Left Column - Chat Area */}
           <div className="w-full lg:w-1/2 flex flex-col h-full overflow-hidden border-r border-border/30">
-            {/* Back button */}
-            <div className="p-4 bg-background">
+            {/* Back button and New Chat button */}
+            <div className="p-4 bg-background flex justify-between items-center">
               <Button 
                 variant="outline" 
                 onClick={() => window.location.href = `/worlds/${worldId}`}
-                className="mb-2"
               >
                 <ArrowLeft size={16} className="mr-2" /> Back to World
+              </Button>
+              
+              <Button
+                variant="outline"
+                onClick={handleNewChat}
+                className="gap-2"
+              >
+                <Plus size={16} /> New Chat
               </Button>
             </div>
             
@@ -279,17 +286,6 @@ Would you like me to elaborate on any of these aspects?`
                 ))}
               </div>
             </ScrollArea>
-            
-            {/* New Chat button */}
-            <div className="p-4 bg-background">
-              <Button
-                variant="outline"
-                className="w-full mb-4"
-                onClick={handleNewChat}
-              >
-                <Plus size={16} className="mr-2" /> New Chat
-              </Button>
-            </div>
             
             {/* Fixed input area */}
             <div className="p-4 bg-background">
@@ -326,40 +322,45 @@ Would you like me to elaborate on any of these aspects?`
             <ScrollArea className="h-full">
               <div className="p-6">
                 <Card id="character-sheet" className="bg-card border-none shadow-none">
-                  <CardContent className="space-y-8 p-0">
+                  <CardHeader>
+                    <CardTitle>Character Sheet</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-8">
                     {/* 1. Name, Race, Jobs (3-column grid) */}
-                    <div className="space-y-2">
-                      <h2 className="text-2xl font-bold">Name</h2>
-                      <EditableField
-                        initialValue={character.name}
-                        onSave={(value) => handleSaveField('name', value)}
-                        placeholder="Character name"
-                        className="p-2 rounded hover:bg-muted/50 border border-border/50"
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <h2 className="text-2xl font-bold">Race</h2>
-                      <EditableField
-                        initialValue={character.race}
-                        onSave={(value) => handleSaveField('race', value)}
-                        placeholder="Race/Species"
-                        className="p-2 rounded hover:bg-muted/50 border border-border/50"
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <h2 className="text-2xl font-bold">Jobs</h2>
-                      <EditableField
-                        initialValue={character.jobs}
-                        onSave={(value) => handleSaveField('jobs', value)}
-                        placeholder="Character jobs"
-                        className="p-2 rounded hover:bg-muted/50 border border-border/50"
-                      />
+                    <div className="grid grid-cols-3 gap-8">
+                      <div className="space-y-2">
+                        <h2 className="text-2xl font-bold">Name</h2>
+                        <EditableField
+                          initialValue={character.name}
+                          onSave={(value) => handleSaveField('name', value)}
+                          placeholder="Character name"
+                          className="p-2 rounded hover:bg-muted/50 border border-border/50"
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <h2 className="text-2xl font-bold">Race</h2>
+                        <EditableField
+                          initialValue={character.race}
+                          onSave={(value) => handleSaveField('race', value)}
+                          placeholder="Race/Species"
+                          className="p-2 rounded hover:bg-muted/50 border border-border/50"
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <h2 className="text-2xl font-bold">Jobs</h2>
+                        <EditableField
+                          initialValue={character.jobs}
+                          onSave={(value) => handleSaveField('jobs', value)}
+                          placeholder="Character jobs"
+                          className="p-2 rounded hover:bg-muted/50 border border-border/50"
+                        />
+                      </div>
                     </div>
                     
                     {/* 2. Role, Parents (2-column grid) */}
-                    <div className="grid grid-cols-1 gap-8">
+                    <div className="grid grid-cols-2 gap-8">
                       <div className="space-y-2">
                         <h2 className="text-2xl font-bold">Role</h2>
                         <EditableField
@@ -383,7 +384,7 @@ Would you like me to elaborate on any of these aspects?`
                     {/* 3. Personality Block */}
                     <div className="space-y-4">
                       <h2 className="text-2xl font-bold">Personality</h2>
-                      <div className="grid grid-cols-1 gap-4">
+                      <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <label className="text-lg font-medium">MBTI</label>
                           <EditableField
@@ -439,7 +440,7 @@ Would you like me to elaborate on any of these aspects?`
                     {/* 5. Equipment */}
                     <div className="space-y-4">
                       <h2 className="text-2xl font-bold">Equipment</h2>
-                      <div className="grid grid-cols-1 gap-4">
+                      <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <label className="text-lg font-medium">Weapon</label>
                           <EditableField
