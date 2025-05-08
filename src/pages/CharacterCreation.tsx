@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import Layout from '../components/Layout';
@@ -56,7 +55,7 @@ const CharacterCreation = () => {
       appearance: 'Tall with slight elven features, emerald eyes, and dark hair with a silver streak.',
       background: 'Raised in the border forests by his human mother after his elven father disappeared on a dangerous mission.',
       goals: 'To discover what happened to his father and protect the ancient forests from corruption.',
-      relationships: 'Mentored by an old human ranger named Harlon. Rivalry with Thorne Ironheart, a dwarf who blames elves for his clan's misfortune.'
+      relationships: "Mentored by an old human ranger named Harlon. Rivalry with Thorne Ironheart, a dwarf who blames elves for his clan's misfortune."
     });
   }, [worldId]);
   
