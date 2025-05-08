@@ -1,10 +1,10 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Download, FileText } from 'lucide-react';
+import { ArrowLeft, Download, FileText, Upload } from 'lucide-react';
 import { exportAsPDF, exportAsImage } from '../utils/exportUtils';
 import { useToast } from "@/hooks/use-toast";
 import { Character } from '../components/character/CharacterSheet';
@@ -13,6 +13,8 @@ const CharacterPreview = () => {
   const { worldId, characterId } = useParams<{ worldId: string; characterId: string }>();
   const [character, setCharacter] = useState<Character | null>(null);
   const [loading, setLoading] = useState(true);
+  const [characterImage, setCharacterImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -85,6 +87,27 @@ const CharacterPreview = () => {
     }
   };
 
+  const handleImageUpload = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      setCharacterImage(result);
+    };
+    reader.readAsDataURL(file);
+    
+    toast({
+      title: "Image uploaded",
+      description: "Character image has been updated",
+    });
+  };
+
   // Convert stat value to percentage for Progress component
   const getStatPercentage = (value: string): number => {
     const num = parseInt(value, 10);
@@ -146,16 +169,37 @@ const CharacterPreview = () => {
             <div className="p-6">
               <div className="flex gap-8">
                 {/* Character Image */}
-                <div className="w-56 h-64 bg-gray-800 flex items-center justify-center">
-                  [Character Image]
+                <div 
+                  className="w-56 h-64 bg-gray-800 flex items-center justify-center cursor-pointer"
+                  onClick={handleImageUpload}
+                >
+                  {characterImage ? (
+                    <img 
+                      src={characterImage} 
+                      alt="Character" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center text-gray-400">
+                      <Upload size={24} className="mb-2" />
+                      [Character Image]
+                    </div>
+                  )}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
                 </div>
                 
                 {/* Stats */}
                 <div className="flex-1">
                   <h2 className="text-xl font-semibold uppercase mb-4">STATS</h2>
-                  <div className="space-y-6">
+                  <div className="space-y-3">
                     <div className="flex items-center gap-4">
-                      <span className="w-20">HP</span>
+                      <span className="w-16">HP</span>
                       <div className="w-full max-w-lg h-2 bg-gray-700 rounded overflow-hidden">
                         <div
                           className="h-full bg-blue-500"
@@ -165,7 +209,7 @@ const CharacterPreview = () => {
                       <span className="w-8 text-right">{character.stats.hp}</span>
                     </div>
                     <div className="flex items-center gap-4">
-                      <span className="w-20">MP</span>
+                      <span className="w-16">MP</span>
                       <div className="w-full max-w-lg h-2 bg-gray-700 rounded overflow-hidden">
                         <div
                           className="h-full bg-blue-500"
@@ -175,7 +219,7 @@ const CharacterPreview = () => {
                       <span className="w-8 text-right">{character.stats.mp}</span>
                     </div>
                     <div className="flex items-center gap-4">
-                      <span className="w-20">Phys Atk</span>
+                      <span className="w-16">Phys Atk</span>
                       <div className="w-full max-w-lg h-2 bg-gray-700 rounded overflow-hidden">
                         <div
                           className="h-full bg-blue-500"
@@ -185,7 +229,7 @@ const CharacterPreview = () => {
                       <span className="w-8 text-right">{character.stats.physAttack}</span>
                     </div>
                     <div className="flex items-center gap-4">
-                      <span className="w-20">Phys Def</span>
+                      <span className="w-16">Phys Def</span>
                       <div className="w-full max-w-lg h-2 bg-gray-700 rounded overflow-hidden">
                         <div
                           className="h-full bg-blue-500"
@@ -195,7 +239,7 @@ const CharacterPreview = () => {
                       <span className="w-8 text-right">{character.stats.physDefense}</span>
                     </div>
                     <div className="flex items-center gap-4">
-                      <span className="w-20">Agility</span>
+                      <span className="w-16">Agility</span>
                       <div className="w-full max-w-lg h-2 bg-gray-700 rounded overflow-hidden">
                         <div
                           className="h-full bg-blue-500"
@@ -205,7 +249,7 @@ const CharacterPreview = () => {
                       <span className="w-8 text-right">{character.stats.agility}</span>
                     </div>
                     <div className="flex items-center gap-4">
-                      <span className="w-20">Mag Atk</span>
+                      <span className="w-16">Mag Atk</span>
                       <div className="w-full max-w-lg h-2 bg-gray-700 rounded overflow-hidden">
                         <div
                           className="h-full bg-blue-500"
@@ -215,7 +259,7 @@ const CharacterPreview = () => {
                       <span className="w-8 text-right">{character.stats.magicAttack}</span>
                     </div>
                     <div className="flex items-center gap-4">
-                      <span className="w-20">Mag Def</span>
+                      <span className="w-16">Mag Def</span>
                       <div className="w-full max-w-lg h-2 bg-gray-700 rounded overflow-hidden">
                         <div
                           className="h-full bg-blue-500"
@@ -225,7 +269,7 @@ const CharacterPreview = () => {
                       <span className="w-8 text-right">{character.stats.magicDefense}</span>
                     </div>
                     <div className="flex items-center gap-4">
-                      <span className="w-20">Resist</span>
+                      <span className="w-16">Resist</span>
                       <div className="w-full max-w-lg h-2 bg-gray-700 rounded overflow-hidden">
                         <div
                           className="h-full bg-blue-500"
