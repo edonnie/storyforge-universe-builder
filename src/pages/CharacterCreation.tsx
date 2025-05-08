@@ -8,11 +8,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Trash, Save, Send } from 'lucide-react';
 
+// Define the ChatMessage type to ensure proper typing
+type ChatMessageRole = "user" | "assistant";
+
+interface ChatMessage {
+  role: ChatMessageRole;
+  content: string;
+}
+
 const CharacterCreation = () => {
   const { worldId } = useParams<{ worldId: string }>();
-  const [chatMessages, setChatMessages] = useState<Array<{ role: 'user' | 'assistant', content: string }>>([
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     { 
-      role: 'assistant', 
+      role: "assistant", 
       content: 'Hello! I can help you create a character. What kind of character would you like to create?' 
     }
   ]);
@@ -37,7 +45,7 @@ const CharacterCreation = () => {
     // Add user message to chat
     const newMessages = [
       ...chatMessages, 
-      { role: 'user', content: inputMessage }
+      { role: "user" as const, content: inputMessage }
     ];
     setChatMessages(newMessages);
     
@@ -49,7 +57,7 @@ const CharacterCreation = () => {
       setChatMessages([
         ...newMessages,
         {
-          role: 'assistant',
+          role: "assistant" as const,
           content: `That's a great idea! Let me suggest some details for your character based on that.
 
 How about a character named Alaric Stormwind, a half-elven ranger with a mysterious past? He's known for his exceptional tracking abilities and has a deep connection with nature.
@@ -145,7 +153,7 @@ Would you like me to elaborate on any of these aspects?`
           
           <div className="grid grid-cols-2 gap-4">
             <Button variant="outline" className="w-full" onClick={() => setChatMessages([{ 
-                role: 'assistant', 
+                role: "assistant", 
                 content: 'Hello! I can help you create a character. What kind of character would you like to create?' 
               }])}>
               <Trash size={16} className="mr-2" /> Clear Chat

@@ -7,11 +7,13 @@ export interface World {
   synopsis?: string;
 }
 
+export type EntityType = 'realm' | 'location' | 'faction' | 'character' | 'item';
+
 export interface Entity {
   id: string;
   worldId: string;
   name: string;
-  type: 'realm' | 'location' | 'faction' | 'character' | 'item';
+  type: EntityType;
   details: Record<string, any>;
   createdAt: string;
 }
@@ -42,9 +44,9 @@ export const fetchWorldById = async (worldId: string): Promise<World | null> => 
   });
 };
 
-export const fetchEntitiesByWorldId = async (worldId: string, type?: string): Promise<Entity[]> => {
+export const fetchEntitiesByWorldId = async (worldId: string, type?: EntityType): Promise<Entity[]> => {
   // Mock entities data - will be replaced with Supabase data
-  const allEntities = [
+  const allEntities: Entity[] = [
     // Realms
     { id: '1', worldId: '1', name: 'Northern Kingdom', type: 'realm', details: { description: 'A cold, harsh land ruled by warrior kings.' }, createdAt: '2023-05-20T10:30:00Z' },
     { id: '2', worldId: '1', name: 'Eastern Empire', type: 'realm', details: { description: 'A sophisticated realm known for its scholars and mages.' }, createdAt: '2023-05-22T14:15:00Z' },
