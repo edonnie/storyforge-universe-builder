@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import Layout from '../components/Layout';
@@ -174,23 +175,20 @@ const CharacterCreation = () => {
 How about a character named Alaric Stormwind, a half-elven ranger with a mysterious past? He's known for his exceptional tracking abilities and has a deep connection with nature.
 
 Personality: Stoic but compassionate, prefers solitude but fiercely loyal to allies.
-Appearance: Tall with slight elven features, emerald eyes, and dark hair with a silver streak.
-Background: Raised in the border forests by his human mother after his elven father disappeared on a dangerous mission.
 
 Would you like me to elaborate on any of these aspects?`
         }
       ]);
       
-      // Update character details as if AI suggested them
-      setCharacter({
-        ...character,
-        name: character.name || 'Alaric Stormwind',
-        race: character.race || 'Half-Elf',
-        role: character.role || 'Ranger',
-        personality: character.personality || 'Stoic but compassionate, prefers solitude but fiercely loyal to allies.',
-        appearance: character.appearance || 'Tall with slight elven features, emerald eyes, and dark hair with a silver streak.',
-        background: character.background || 'Raised in the border forests by his human mother after his elven father disappeared on a dangerous mission.'
-      });
+      // Update character details based on AI suggestion
+      // No need to override existing values
+      setCharacter(prev => ({
+        ...prev,
+        name: prev.name || 'Alaric Stormwind',
+        race: prev.race || 'Half-Elf',
+        role: prev.role || 'Ranger',
+        bio: prev.bio || 'A half-elven ranger with exceptional tracking abilities and a deep connection to nature.'
+      }));
     }, 1000);
   };
   
