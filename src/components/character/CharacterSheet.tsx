@@ -6,6 +6,7 @@ import EditableField from '../EditableField';
 import CharacterStatBlock from './CharacterStatBlock';
 import CharacterPersonality from './CharacterPersonality';
 import CharacterAbilities from './CharacterAbilities';
+import { exportAsImage, exportAsPDF } from "@/utils/exportUtils";
 
 // Define the Character interface with nested fields
 export interface Character {
@@ -45,6 +46,21 @@ export interface Character {
   notes: string;
   relationships: string;
 }
+
+export const exportCharacterSheet = async (format: 'image' | 'pdf') => {
+  const elementId = 'character-sheet';
+  const fileName = 'character-sheet';
+  
+  try {
+    if (format === 'image') {
+      await exportAsImage(elementId, fileName);
+    } else {
+      await exportAsPDF(elementId, fileName);
+    }
+  } catch (error) {
+    console.error(`Failed to export as ${format}:`, error);
+  }
+};
 
 interface CharacterSheetProps {
   character: Character;

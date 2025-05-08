@@ -1,10 +1,15 @@
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ArrowLeft, Plus, Send } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { parseStructuredOutput } from "../../utils/parseUtils";
+import { Character } from "../character/CharacterSheet";
+
+// Define the API base URL
+const API_BASE_URL = "https://fateengine-server.onrender.com";
 
 // Define the ChatMessage type to ensure proper typing
 export type ChatMessageRole = "user" | "assistant";
@@ -19,19 +24,33 @@ interface ChatSectionProps {
   chatMessages: ChatMessage[];
   setChatMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
   onSaveCharacter: () => void;
+  character: Character;
+  setCharacter: React.Dispatch<React.SetStateAction<Character>>;
 }
 
 const ChatSection = ({ 
   worldId, 
   chatMessages, 
   setChatMessages,
-  onSaveCharacter
+  onSaveCharacter,
+  character,
+  setCharacter
 }: ChatSectionProps) => {
   const [inputMessage, setInputMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
   
-  const handleMessageSubmit = (e: React.FormEvent) => {
+  // Scroll to the bottom when messages change
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      const scrollArea = scrollAreaRef.current;
+      scrollArea.scrollTop = scrollArea.scrollHeight;
+    }
+  }, [chatMessages]);
+  
+  const handleMessageSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputMessage.trim()) return;
+    if (!inputMessage.trim() || isLoading) return;
     
     // Add user message to chat
     const newMessages = [
@@ -42,30 +61,119 @@ const ChatSection = ({
     
     // Clear input
     setInputMessage('');
+    setIsLoading(true);
     
-    // Simulate AI response
-    setTimeout(() => {
+    try {
+      // Get the token
+      const token = localStorage.getItem('fateToken');
+      
+      // Show typing indicator (defined in index.html)
+      if (window.showTypingIndicator) {
+        window.showTypingIndicator();
+      }
+      
+      // Call the generate API
+      const response = await fetch(`${API_BASE_URL}/generate`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': token || ''
+        },
+        body: JSON.stringify({ prompt: newMessages })
+      });
+      
+      // Hide typing indicator
+      if (window.removeTypingIndicator) {
+        window.removeTypingIndicator();
+      }
+      
+      if (!response.ok) {
+        // Handle error
+        const errorMessage = `Server error: ${response.status}`;
+        setChatMessages([
+          ...newMessages,
+          { role: "assistant", content: `⚠️ Error: ${errorMessage}` }
+        ]);
+        return;
+      }
+      
+      // Parse the response
+      const data = await response.json();
+      const aiMessage = { role: "assistant" as const, content: data.response };
+      
+      // Add assistant message to chat
+      setChatMessages([...newMessages, aiMessage]);
+      
+      // Parse structured output and update character
+      const updatedCharacter = parseStructuredOutput(data.response, character);
+      setCharacter(updatedCharacter);
+      
+    } catch (error) {
+      console.error('Error calling generate API:', error);
+      
+      // Hide typing indicator
+      if (window.removeTypingIndicator) {
+        window.removeTypingIndicator();
+      }
+      
+      // Show error message
       setChatMessages([
         ...newMessages,
-        {
-          role: "assistant" as const,
-          content: `That's a great idea! Let me suggest some details for your character based on that.
-
-How about a character named Alaric Stormwind, a half-elven ranger with a mysterious past? He's known for his exceptional tracking abilities and has a deep connection with nature.
-
-Personality: Stoic but compassionate, prefers solitude but fiercely loyal to allies.
-
-Would you like me to elaborate on any of these aspects?`
-        }
+        { role: "assistant", content: `⚠️ Error: Could not connect to the server. Please try again later.` }
       ]);
-    }, 1000);
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   const handleNewChat = () => {
+    // Set a new project ID in localStorage
+    localStorage.setItem('currentProjectId', `project_${Date.now()}`);
+    
+    // Reset chat messages
     setChatMessages([{ 
       role: "assistant", 
       content: 'Hello! I can help you create a character. What kind of character would you like to create?' 
     }]);
+    
+    // Reset character data
+    setCharacter({
+      id: `char_${Math.random().toString(36).substr(2, 9)}`,
+      name: '',
+      race: '',
+      jobs: '',
+      role: '',
+      parents: '',
+      personality: {
+        mbti: '',
+        enneagram: '',
+        alignment: '',
+        traits: '',
+      },
+      bio: '',
+      equipment: {
+        weapon: '',
+        armor: '',
+      },
+      style: '',
+      stats: {
+        hp: '',
+        mp: '',
+        physAttack: '',
+        physDefense: '',
+        agility: '',
+        magicAttack: '',
+        magicDefense: '',
+        resist: '',
+      },
+      abilities: {
+        mainAbility: '',
+        signatureSkills: '',
+        passives: '',
+      },
+      notes: '',
+      relationships: '',
+    });
   };
   
   return (
@@ -83,6 +191,7 @@ Would you like me to elaborate on any of these aspects?`
           variant="outline"
           onClick={handleNewChat}
           className="gap-2"
+          disabled={isLoading}
         >
           <Plus size={16} /> New Chat
         </Button>
@@ -90,7 +199,7 @@ Would you like me to elaborate on any of these aspects?`
       
       {/* Chat area - Scrollable */}
       <ScrollArea className="flex-1 px-4">
-        <div className="space-y-4 mb-4">
+        <div className="space-y-4 mb-4" ref={scrollAreaRef}>
           {chatMessages.map((message, index) => (
             <div 
               key={index} 
@@ -109,6 +218,8 @@ Would you like me to elaborate on any of these aspects?`
               </div>
             </div>
           ))}
+          
+          {/* Typing indicator would appear here dynamically */}
         </div>
       </ScrollArea>
       
@@ -120,8 +231,9 @@ Would you like me to elaborate on any of these aspects?`
             onChange={(e) => setInputMessage(e.target.value)}
             placeholder="Talk to the engine..."
             className="flex-grow"
+            disabled={isLoading}
           />
-          <Button type="submit" size="icon">
+          <Button type="submit" size="icon" disabled={isLoading}>
             <Send size={16} />
           </Button>
         </form>
@@ -135,6 +247,7 @@ Would you like me to elaborate on any of these aspects?`
             variant="default"
             onClick={onSaveCharacter}
             className="gap-2"
+            disabled={isLoading}
           >
             Save Character
           </Button>
@@ -143,5 +256,13 @@ Would you like me to elaborate on any of these aspects?`
     </div>
   );
 };
+
+// Add global typing declarations for the functions defined in index.html
+declare global {
+  interface Window {
+    showTypingIndicator?: () => void;
+    removeTypingIndicator?: () => void;
+  }
+}
 
 export default ChatSection;

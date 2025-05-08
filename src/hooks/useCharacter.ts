@@ -4,6 +4,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Character } from '../components/character/CharacterSheet';
 import { updateEntity } from '../utils/worldUtils';
 
+// API base URL
+const API_BASE_URL = "https://fateengine-server.onrender.com";
+
 export const useCharacter = (worldId: string | undefined) => {
   const [character, setCharacter] = useState<Character>({
     id: '',
@@ -42,48 +45,44 @@ export const useCharacter = (worldId: string | undefined) => {
     notes: '',
     relationships: '',
   });
+  
   const { toast } = useToast();
 
   useEffect(() => {
-    // In a real implementation, we would fetch the character data if editing an existing character
-    // For now, we'll use mock data
-    setCharacter({
-      id: `char_${Math.random().toString(36).substr(2, 9)}`,
-      name: 'Alaric Stormwind',
-      race: 'Half-Elf',
-      jobs: 'Scout, Hunter',
-      role: 'Ranger',
-      parents: 'Elara (Human), Thranduil (Elf)',
-      personality: {
-        mbti: 'ISTP',
-        enneagram: '5w4',
-        alignment: 'Neutral Good',
-        traits: 'Stoic, Observant, Independent, Resourceful, Cautious',
-      },
-      bio: 'Raised in the border forests by his human mother after his elven father disappeared on a dangerous mission. Alaric learned to survive in the wilderness from an early age.',
-      equipment: {
-        weapon: 'Windwhisper Bow (Enchanted Longbow)',
-        armor: 'Forest Warden Leathers',
-      },
-      style: 'Prefers earthy tones and practical clothing. His cloak is adorned with feathers from various birds he has encountered.',
-      stats: {
-        hp: '75',
-        mp: '45',
-        physAttack: '68',
-        physDefense: '55',
-        agility: '80',
-        magicAttack: '40',
-        magicDefense: '50',
-        resist: '60',
-      },
-      abilities: {
-        mainAbility: 'Nature\'s Sentinel',
-        signatureSkills: 'Precise Shot, Shadow Step, Beast Speech, Trailblazing',
-        passives: 'Keen Senses, Forest Affinity, Elven Grace',
-      },
-      notes: 'Carries a journal filled with sketches of plants and animals. Has a small scar above his right eyebrow from a childhood accident.',
-      relationships: "Mentored by an old human ranger named Harlon. Rivalry with Thorne Ironheart, a dwarf who blames elves for his clan's misfortune.",
-    });
+    // Load character data from API or localStorage
+    const loadCharacter = async () => {
+      try {
+        // Try to get the authentication token
+        const token = localStorage.getItem('fateToken');
+        const projectId = localStorage.getItem('currentProjectId');
+        
+        if (!token || !projectId) {
+          // If no token or project ID, use initial empty character
+          return;
+        }
+        
+        // Get character data from the server
+        const response = await fetch(`${API_BASE_URL}/load`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': token
+          },
+          body: JSON.stringify({ projectId })
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.characterData) {
+            setCharacter(data.characterData);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading character data:', error);
+      }
+    };
+    
+    loadCharacter();
   }, [worldId]);
 
   // Function to handle saving fields
@@ -117,17 +116,60 @@ export const useCharacter = (worldId: string | undefined) => {
     }
   };
 
-  const handleSaveCharacter = () => {
-    // This will be integrated with Supabase in the future
-    toast({
-      title: "Character saved",
-      description: "Your character has been saved successfully",
-    });
+  const handleSaveCharacter = async () => {
+    try {
+      // Get the authentication token and project ID
+      const token = localStorage.getItem('fateToken');
+      const projectId = localStorage.getItem('currentProjectId');
+      
+      if (!token || !projectId) {
+        toast({
+          title: "Authentication error",
+          description: "Could not save character. Please log in again.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Save character to the server
+      const response = await fetch(`${API_BASE_URL}/save`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': token
+        },
+        body: JSON.stringify({
+          projectId,
+          characterData: character
+        })
+      });
+      
+      if (response.ok) {
+        toast({
+          title: "Character saved",
+          description: "Your character has been saved successfully",
+        });
+      } else {
+        toast({
+          title: "Save failed",
+          description: "Failed to save character. Please try again.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error saving character:', error);
+      toast({
+        title: "Save error",
+        description: "An error occurred while saving your character.",
+        variant: "destructive"
+      });
+    }
   };
 
   return {
     character,
     handleSaveField,
     handleSaveCharacter,
+    setCharacter
   };
 };
