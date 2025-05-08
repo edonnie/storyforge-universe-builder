@@ -26,15 +26,15 @@ export default {
         background: '#0a0a0a',
         foreground: '#f5f5f5',
         primary: {
-          DEFAULT: '#9b87f5',
-          foreground: '#0a0a0a'
-        },
-        secondary: {
-          DEFAULT: '#7E69AB',
+          DEFAULT: '#3a86ff',
           foreground: '#ffffff'
         },
+        secondary: {
+          DEFAULT: '#4cc9f0',
+          foreground: '#0a0a0a'
+        },
         accent: {
-          DEFAULT: '#6E59A5',
+          DEFAULT: '#4895ef',
           foreground: '#ffffff'
         },
         destructive: {
@@ -50,7 +50,7 @@ export default {
           foreground: '#f5f5f5'
         },
         card: {
-          DEFAULT: '#1A1F2C',
+          DEFAULT: '#111111',
           foreground: '#f5f5f5'
         },
         dark: {

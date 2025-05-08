@@ -41,4 +41,12 @@
   .text-gradient {
     @apply bg-gradient-to-br from-primary via-primary/90 to-secondary bg-clip-text text-transparent;
   }
+  
+  .card-hover {
+    @apply transition-all duration-200 hover:bg-muted/20;
+  }
+  
+  .entity-card {
+    @apply bg-card border border-border/50 rounded-lg p-4 hover:border-primary/50 transition-colors;
+  }
 }
