@@ -1,16 +1,15 @@
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 import EditableField from '../components/EditableField';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Trash, Save, Send, Download, FileText } from 'lucide-react';
+import { ArrowLeft, Save, Send, Plus } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { updateEntity } from '../utils/worldUtils';
-import { exportAsPDF, exportAsImage } from '../utils/exportUtils';
 
 // Define the ChatMessage type to ensure proper typing
 type ChatMessageRole = "user" | "assistant";
@@ -201,7 +200,9 @@ Would you like me to elaborate on any of these aspects?`
     // Handle nested fields using dot notation (e.g., "personality.mbti")
     if (field.includes('.')) {
       const [section, subfield] = field.split('.');
-      updatedCharacter[section][subfield] = value;
+      if (updatedCharacter[section] && typeof updatedCharacter[section] === 'object') {
+        updatedCharacter[section][subfield] = value;
+      }
     } else {
       updatedCharacter[field] = value;
     }
@@ -230,26 +231,11 @@ Would you like me to elaborate on any of these aspects?`
     });
   };
   
-  const handleExport = async (type: 'pdf' | 'image') => {
-    try {
-      if (type === 'pdf') {
-        await exportAsPDF('character-sheet', `${character.name || 'character'}`);
-      } else {
-        await exportAsImage('character-sheet', `${character.name || 'character'}`);
-      }
-      
-      toast({
-        title: "Export successful",
-        description: `Character exported as ${type.toUpperCase()}`,
-      });
-    } catch (error) {
-      console.error(`Failed to export as ${type}:`, error);
-      toast({
-        title: "Export failed",
-        description: `Could not export character as ${type}`,
-        variant: "destructive",
-      });
-    }
+  const handleNewChat = () => {
+    setChatMessages([{ 
+      role: "assistant", 
+      content: 'Hello! I can help you create a character. What kind of character would you like to create?' 
+    }]);
   };
   
   return (
@@ -257,191 +243,181 @@ Would you like me to elaborate on any of these aspects?`
       {/* Main content with fixed height */}
       <div className="fixed inset-0 pt-16 pb-0"> {/* pt-16 accounts for the header height */}
         <div className="flex h-full">
-          {/* Left Column - Fixed header and button controls */}
-          <div className="w-full lg:w-1/2 flex flex-col h-full">
+          {/* Left Column - Chat Area */}
+          <div className="w-full lg:w-1/2 flex flex-col h-full overflow-hidden border-r border-border/30">
+            {/* Back button */}
             <div className="p-4 bg-background">
               <Button 
                 variant="outline" 
                 onClick={() => window.location.href = `/worlds/${worldId}`}
-                className="mb-4"
+                className="mb-2"
               >
                 <ArrowLeft size={16} className="mr-2" /> Back to World
               </Button>
-              <h1 className="text-3xl font-bold">Create New Character</h1>
             </div>
             
             {/* Chat area - Scrollable */}
-            <div className="flex-1 p-4 overflow-hidden">
-              <Card className="bg-card h-full flex flex-col">
-                <CardHeader>
-                  <CardTitle>AI Character Assistant</CardTitle>
-                </CardHeader>
-                <CardContent className="flex-1 overflow-hidden flex flex-col">
-                  {/* Scrollable chat messages */}
-                  <ScrollArea className="flex-1 pr-4 mb-4">
-                    <div className="space-y-4">
-                      {chatMessages.map((message, index) => (
-                        <div 
-                          key={index} 
-                          className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                        >
-                          <div className={`max-w-[80%] p-3 rounded-lg ${
-                            message.role === 'user' 
-                              ? 'bg-primary text-primary-foreground' 
-                              : 'bg-muted text-foreground'
-                          }`}>
-                            {message.content.split('\n').map((paragraph, i) => (
-                              <p key={i} className={i > 0 ? 'mt-2' : ''}>
-                                {paragraph}
-                              </p>
-                            ))}
-                          </div>
-                        </div>
+            <ScrollArea className="flex-1 px-4">
+              <div className="space-y-4 mb-4">
+                {chatMessages.map((message, index) => (
+                  <div 
+                    key={index} 
+                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div className={`max-w-[85%] p-3 rounded-lg ${
+                      message.role === 'user' 
+                        ? 'bg-primary text-primary-foreground' 
+                        : 'bg-muted text-foreground'
+                    }`}>
+                      {message.content.split('\n').map((paragraph, i) => (
+                        <p key={i} className={i > 0 ? 'mt-2' : ''}>
+                          {paragraph}
+                        </p>
                       ))}
                     </div>
-                  </ScrollArea>
-                  
-                  {/* Fixed input area */}
-                  <form onSubmit={handleMessageSubmit} className="flex gap-2 mt-auto">
-                    <Input
-                      value={inputMessage}
-                      onChange={(e) => setInputMessage(e.target.value)}
-                      placeholder="Ask for character suggestions..."
-                      className="flex-grow"
-                    />
-                    <Button type="submit">
-                      <Send size={16} />
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+            
+            {/* New Chat button */}
+            <div className="p-4 bg-background">
+              <Button
+                variant="outline"
+                className="w-full mb-4"
+                onClick={handleNewChat}
+              >
+                <Plus size={16} className="mr-2" /> New Chat
+              </Button>
             </div>
             
-            {/* Fixed bottom controls */}
+            {/* Fixed input area */}
             <div className="p-4 bg-background">
-              <div className="grid grid-cols-2 gap-4">
-                <Button variant="outline" className="w-full" onClick={() => setChatMessages([{ 
-                    role: "assistant", 
-                    content: 'Hello! I can help you create a character. What kind of character would you like to create?' 
-                  }])}>
-                  <Trash size={16} className="mr-2" /> Clear Chat
+              <form onSubmit={handleMessageSubmit} className="flex gap-2">
+                <Input
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  placeholder="Talk to the engine..."
+                  className="flex-grow"
+                />
+                <Button type="submit" size="icon">
+                  <Send size={16} />
                 </Button>
-                <Button className="w-full" onClick={handleSaveCharacter}>
-                  <Save size={16} className="mr-2" /> Save Character
-                </Button>
-              </div>
+              </form>
               
-              <div className="mt-4 grid grid-cols-2 gap-4">
-                <Button variant="outline" className="w-full" onClick={() => handleExport('pdf')}>
-                  <FileText size={16} className="mr-2" /> Export as PDF
-                </Button>
-                <Button variant="outline" className="w-full" onClick={() => handleExport('image')}>
-                  <Download size={16} className="mr-2" /> Export as Image
+              <div className="flex justify-between mt-4">
+                <Link to="/plans" className="text-muted-foreground hover:text-foreground transition-colors">
+                  View Plans
+                </Link>
+                
+                <Button 
+                  variant="default"
+                  onClick={handleSaveCharacter}
+                  className="gap-2"
+                >
+                  <Save size={16} /> Save Character
                 </Button>
               </div>
             </div>
           </div>
           
           {/* Right Column - Character Details - Scrollable */}
-          <div className="hidden lg:block w-1/2 h-full">
+          <div className="hidden lg:block w-1/2 h-full overflow-hidden">
             <ScrollArea className="h-full">
-              <div className="p-4">
-                <Card id="character-sheet" className="bg-card">
-                  <CardHeader>
-                    <CardTitle>Character Sheet</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
+              <div className="p-6">
+                <Card id="character-sheet" className="bg-card border-none shadow-none">
+                  <CardContent className="space-y-8 p-0">
                     {/* 1. Name, Race, Jobs (3-column grid) */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Name</label>
-                        <EditableField
-                          initialValue={character.name}
-                          onSave={(value) => handleSaveField('name', value)}
-                          placeholder="Character name"
-                          className="p-2 rounded hover:bg-muted/50"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Race</label>
-                        <EditableField
-                          initialValue={character.race}
-                          onSave={(value) => handleSaveField('race', value)}
-                          placeholder="Race/Species"
-                          className="p-2 rounded hover:bg-muted/50"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Jobs</label>
-                        <EditableField
-                          initialValue={character.jobs}
-                          onSave={(value) => handleSaveField('jobs', value)}
-                          placeholder="Character jobs"
-                          className="p-2 rounded hover:bg-muted/50"
-                        />
-                      </div>
+                    <div className="space-y-2">
+                      <h2 className="text-2xl font-bold">Name</h2>
+                      <EditableField
+                        initialValue={character.name}
+                        onSave={(value) => handleSaveField('name', value)}
+                        placeholder="Character name"
+                        className="p-2 rounded hover:bg-muted/50 border border-border/50"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <h2 className="text-2xl font-bold">Race</h2>
+                      <EditableField
+                        initialValue={character.race}
+                        onSave={(value) => handleSaveField('race', value)}
+                        placeholder="Race/Species"
+                        className="p-2 rounded hover:bg-muted/50 border border-border/50"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <h2 className="text-2xl font-bold">Jobs</h2>
+                      <EditableField
+                        initialValue={character.jobs}
+                        onSave={(value) => handleSaveField('jobs', value)}
+                        placeholder="Character jobs"
+                        className="p-2 rounded hover:bg-muted/50 border border-border/50"
+                      />
                     </div>
                     
                     {/* 2. Role, Parents (2-column grid) */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-8">
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Role</label>
+                        <h2 className="text-2xl font-bold">Role</h2>
                         <EditableField
                           initialValue={character.role}
                           onSave={(value) => handleSaveField('role', value)}
                           placeholder="Class/Occupation"
-                          className="p-2 rounded hover:bg-muted/50"
+                          className="p-2 rounded hover:bg-muted/50 border border-border/50"
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Parents</label>
+                        <h2 className="text-2xl font-bold">Parents</h2>
                         <EditableField
                           initialValue={character.parents}
                           onSave={(value) => handleSaveField('parents', value)}
                           placeholder="Character's parents"
-                          className="p-2 rounded hover:bg-muted/50"
+                          className="p-2 rounded hover:bg-muted/50 border border-border/50"
                         />
                       </div>
                     </div>
                     
                     {/* 3. Personality Block */}
-                    <div className="space-y-4 bg-muted/10 p-4 rounded-md">
-                      <h3 className="text-md font-semibold">Personality</h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="space-y-4">
+                      <h2 className="text-2xl font-bold">Personality</h2>
+                      <div className="grid grid-cols-1 gap-4">
                         <div className="space-y-2">
-                          <label className="text-sm font-medium">MBTI</label>
+                          <label className="text-lg font-medium">MBTI</label>
                           <EditableField
                             initialValue={character.personality.mbti}
                             onSave={(value) => handleSaveField('personality.mbti', value)}
                             placeholder="MBTI Type"
-                            className="p-2 rounded hover:bg-muted/50"
+                            className="p-2 rounded hover:bg-muted/50 border border-border/50"
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-sm font-medium">Enneagram</label>
+                          <label className="text-lg font-medium">Enneagram</label>
                           <EditableField
                             initialValue={character.personality.enneagram}
                             onSave={(value) => handleSaveField('personality.enneagram', value)}
                             placeholder="Enneagram Type"
-                            className="p-2 rounded hover:bg-muted/50"
+                            className="p-2 rounded hover:bg-muted/50 border border-border/50"
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-sm font-medium">Alignment</label>
+                          <label className="text-lg font-medium">Alignment</label>
                           <EditableField
                             initialValue={character.personality.alignment}
                             onSave={(value) => handleSaveField('personality.alignment', value)}
                             placeholder="Character Alignment"
-                            className="p-2 rounded hover:bg-muted/50"
+                            className="p-2 rounded hover:bg-muted/50 border border-border/50"
                           />
                         </div>
-                        <div className="space-y-2 sm:col-span-3">
-                          <label className="text-sm font-medium">Traits</label>
+                        <div className="space-y-2">
+                          <label className="text-lg font-medium">Traits</label>
                           <EditableField
                             initialValue={character.personality.traits}
                             onSave={(value) => handleSaveField('personality.traits', value)}
                             placeholder="Personality traits"
-                            className="p-2 rounded hover:bg-muted/50"
+                            className="p-2 rounded hover:bg-muted/50 border border-border/50"
                             multiline
                           />
                         </div>
@@ -450,36 +426,36 @@ Would you like me to elaborate on any of these aspects?`
                     
                     {/* 4. Bio */}
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Biography</label>
+                      <h2 className="text-2xl font-bold">Biography</h2>
                       <EditableField
                         initialValue={character.bio}
                         onSave={(value) => handleSaveField('bio', value)}
                         placeholder="Character's background story"
-                        className="p-2 rounded hover:bg-muted/50"
+                        className="p-2 rounded hover:bg-muted/50 border border-border/50"
                         multiline
                       />
                     </div>
                     
                     {/* 5. Equipment */}
-                    <div className="space-y-4 bg-muted/10 p-4 rounded-md">
-                      <h3 className="text-md font-semibold">Equipment</h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-4">
+                      <h2 className="text-2xl font-bold">Equipment</h2>
+                      <div className="grid grid-cols-1 gap-4">
                         <div className="space-y-2">
-                          <label className="text-sm font-medium">Weapon</label>
+                          <label className="text-lg font-medium">Weapon</label>
                           <EditableField
                             initialValue={character.equipment.weapon}
                             onSave={(value) => handleSaveField('equipment.weapon', value)}
                             placeholder="Character's weapons"
-                            className="p-2 rounded hover:bg-muted/50"
+                            className="p-2 rounded hover:bg-muted/50 border border-border/50"
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-sm font-medium">Armor</label>
+                          <label className="text-lg font-medium">Armor</label>
                           <EditableField
                             initialValue={character.equipment.armor}
                             onSave={(value) => handleSaveField('equipment.armor', value)}
                             placeholder="Character's armor"
-                            className="p-2 rounded hover:bg-muted/50"
+                            className="p-2 rounded hover:bg-muted/50 border border-border/50"
                           />
                         </div>
                       </div>
@@ -487,125 +463,125 @@ Would you like me to elaborate on any of these aspects?`
                     
                     {/* 6. Style */}
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Style</label>
+                      <h2 className="text-2xl font-bold">Style</h2>
                       <EditableField
                         initialValue={character.style}
                         onSave={(value) => handleSaveField('style', value)}
                         placeholder="Character's appearance and style"
-                        className="p-2 rounded hover:bg-muted/50"
+                        className="p-2 rounded hover:bg-muted/50 border border-border/50"
                         multiline
                       />
                     </div>
                     
                     {/* 7. Stats */}
-                    <div className="space-y-4 bg-muted/10 p-4 rounded-md">
-                      <h3 className="text-md font-semibold">Stats</h3>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="space-y-4">
+                      <h2 className="text-2xl font-bold">Stats</h2>
+                      <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <label className="text-sm font-medium">HP</label>
+                          <label className="text-lg font-medium">HP</label>
                           <EditableField
                             initialValue={character.stats.hp}
                             onSave={(value) => handleSaveField('stats.hp', value)}
                             placeholder="Hit Points"
-                            className="p-2 rounded hover:bg-muted/50"
+                            className="p-2 rounded hover:bg-muted/50 border border-border/50"
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-sm font-medium">MP</label>
+                          <label className="text-lg font-medium">MP</label>
                           <EditableField
                             initialValue={character.stats.mp}
                             onSave={(value) => handleSaveField('stats.mp', value)}
                             placeholder="Magic Points"
-                            className="p-2 rounded hover:bg-muted/50"
+                            className="p-2 rounded hover:bg-muted/50 border border-border/50"
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-sm font-medium">Phys Attack</label>
+                          <label className="text-lg font-medium">Phys Attack</label>
                           <EditableField
                             initialValue={character.stats.physAttack}
                             onSave={(value) => handleSaveField('stats.physAttack', value)}
                             placeholder="Physical Attack"
-                            className="p-2 rounded hover:bg-muted/50"
+                            className="p-2 rounded hover:bg-muted/50 border border-border/50"
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-sm font-medium">Phys Defense</label>
+                          <label className="text-lg font-medium">Phys Defense</label>
                           <EditableField
                             initialValue={character.stats.physDefense}
                             onSave={(value) => handleSaveField('stats.physDefense', value)}
                             placeholder="Physical Defense"
-                            className="p-2 rounded hover:bg-muted/50"
+                            className="p-2 rounded hover:bg-muted/50 border border-border/50"
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-sm font-medium">Agility</label>
+                          <label className="text-lg font-medium">Agility</label>
                           <EditableField
                             initialValue={character.stats.agility}
                             onSave={(value) => handleSaveField('stats.agility', value)}
                             placeholder="Agility"
-                            className="p-2 rounded hover:bg-muted/50"
+                            className="p-2 rounded hover:bg-muted/50 border border-border/50"
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-sm font-medium">Magic Attack</label>
+                          <label className="text-lg font-medium">Magic Attack</label>
                           <EditableField
                             initialValue={character.stats.magicAttack}
                             onSave={(value) => handleSaveField('stats.magicAttack', value)}
                             placeholder="Magic Attack"
-                            className="p-2 rounded hover:bg-muted/50"
+                            className="p-2 rounded hover:bg-muted/50 border border-border/50"
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-sm font-medium">Magic Defense</label>
+                          <label className="text-lg font-medium">Magic Defense</label>
                           <EditableField
                             initialValue={character.stats.magicDefense}
                             onSave={(value) => handleSaveField('stats.magicDefense', value)}
                             placeholder="Magic Defense"
-                            className="p-2 rounded hover:bg-muted/50"
+                            className="p-2 rounded hover:bg-muted/50 border border-border/50"
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-sm font-medium">Resist</label>
+                          <label className="text-lg font-medium">Resist</label>
                           <EditableField
                             initialValue={character.stats.resist}
                             onSave={(value) => handleSaveField('stats.resist', value)}
                             placeholder="Resistance"
-                            className="p-2 rounded hover:bg-muted/50"
+                            className="p-2 rounded hover:bg-muted/50 border border-border/50"
                           />
                         </div>
                       </div>
                     </div>
                     
                     {/* 8. Abilities */}
-                    <div className="space-y-4 bg-muted/10 p-4 rounded-md">
-                      <h3 className="text-md font-semibold">Abilities</h3>
+                    <div className="space-y-4">
+                      <h2 className="text-2xl font-bold">Abilities</h2>
                       <div className="space-y-4">
                         <div className="space-y-2">
-                          <label className="text-sm font-medium">Main Ability</label>
+                          <label className="text-lg font-medium">Main Ability</label>
                           <EditableField
                             initialValue={character.abilities.mainAbility}
                             onSave={(value) => handleSaveField('abilities.mainAbility', value)}
                             placeholder="Character's main ability"
-                            className="p-2 rounded hover:bg-muted/50"
+                            className="p-2 rounded hover:bg-muted/50 border border-border/50"
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-sm font-medium">Signature Skills</label>
+                          <label className="text-lg font-medium">Signature Skills</label>
                           <EditableField
                             initialValue={character.abilities.signatureSkills}
                             onSave={(value) => handleSaveField('abilities.signatureSkills', value)}
                             placeholder="Character's signature skills"
-                            className="p-2 rounded hover:bg-muted/50"
+                            className="p-2 rounded hover:bg-muted/50 border border-border/50"
                             multiline
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-sm font-medium">Passives</label>
+                          <label className="text-lg font-medium">Passives</label>
                           <EditableField
                             initialValue={character.abilities.passives}
                             onSave={(value) => handleSaveField('abilities.passives', value)}
                             placeholder="Character's passive abilities"
-                            className="p-2 rounded hover:bg-muted/50"
+                            className="p-2 rounded hover:bg-muted/50 border border-border/50"
                             multiline
                           />
                         </div>
@@ -614,24 +590,24 @@ Would you like me to elaborate on any of these aspects?`
                     
                     {/* 9. Notes */}
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Notes</label>
+                      <h2 className="text-2xl font-bold">Notes</h2>
                       <EditableField
                         initialValue={character.notes}
                         onSave={(value) => handleSaveField('notes', value)}
                         placeholder="Additional notes about the character"
-                        className="p-2 rounded hover:bg-muted/50"
+                        className="p-2 rounded hover:bg-muted/50 border border-border/50"
                         multiline
                       />
                     </div>
                     
                     {/* 10. Relationships */}
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Relationships</label>
+                      <h2 className="text-2xl font-bold">Relationships</h2>
                       <EditableField
                         initialValue={character.relationships}
                         onSave={(value) => handleSaveField('relationships', value)}
                         placeholder="Character's relationships with other characters"
-                        className="p-2 rounded hover:bg-muted/50"
+                        className="p-2 rounded hover:bg-muted/50 border border-border/50"
                         multiline
                       />
                     </div>
@@ -642,6 +618,13 @@ Would you like me to elaborate on any of these aspects?`
                 </Card>
               </div>
             </ScrollArea>
+            
+            {/* Preview & Export Button (Bottom Right) */}
+            <div className="absolute bottom-4 right-4">
+              <Button variant="default" className="gap-2">
+                Preview & Export
+              </Button>
+            </div>
           </div>
         </div>
       </div>
