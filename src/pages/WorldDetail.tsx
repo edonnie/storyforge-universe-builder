@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Edit, ArrowRight, Check, PlusCircle } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
+import { Plus, Edit, ArrowRight, Check, PlusCircle, Save, Trash } from 'lucide-react';
 import { fetchWorldById, updateWorld, TimelineEvent, fetchEntitiesByWorldId, EntityType } from '../utils/worldUtils';
 import { useToast } from "@/hooks/use-toast";
 
@@ -22,6 +23,7 @@ const WorldDetail = () => {
   const [newEvent, setNewEvent] = useState('');
   const [showNewEventForm, setShowNewEventForm] = useState(false);
   const [activeTab, setActiveTab] = useState('realms');
+  const [editingEvent, setEditingEvent] = useState<TimelineEvent | null>(null);
   const [entities, setEntities] = useState<Record<string, any[]>>({
     realms: [],
     locations: [],
@@ -139,6 +141,55 @@ const WorldDetail = () => {
     }
   };
   
+  const handleEditTimelineEvent = async () => {
+    if (!worldId || !editingEvent) return;
+    
+    try {
+      const updatedTimeline = timeline.map(event => 
+        event.id === editingEvent.id ? editingEvent : event
+      );
+      
+      await updateWorld(worldId, { timeline: updatedTimeline });
+      setTimeline(updatedTimeline);
+      setEditingEvent(null);
+      
+      toast({
+        title: "Success",
+        description: "Timeline event updated",
+      });
+    } catch (error) {
+      console.error('Failed to update timeline event:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update timeline event",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const handleDeleteTimelineEvent = async (eventId: string) => {
+    if (!worldId) return;
+    
+    try {
+      const updatedTimeline = timeline.filter(event => event.id !== eventId);
+      
+      await updateWorld(worldId, { timeline: updatedTimeline });
+      setTimeline(updatedTimeline);
+      
+      toast({
+        title: "Success",
+        description: "Timeline event deleted",
+      });
+    } catch (error) {
+      console.error('Failed to delete timeline event:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete timeline event",
+        variant: "destructive",
+      });
+    }
+  };
+  
   if (loading) {
     return (
       <Layout>
@@ -172,320 +223,418 @@ const WorldDetail = () => {
         </Button>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - World Synopsis and Timeline */}
-        <div className="lg:col-span-1 space-y-6">
-          {/* World Synopsis */}
-          <Card className="bg-card">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>World Synopsis</CardTitle>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setEditMode(!editMode)}
+      {/* World Synopsis */}
+      <Card className="mb-8 bg-black/40 border border-gray-800">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-xl">World Synopsis</CardTitle>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setEditMode(!editMode)}
+            className="text-gray-400 hover:text-white"
+          >
+            {editMode ? <Check size={18} /> : <Edit size={18} />}
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {editMode ? (
+            <div className="space-y-4">
+              <Textarea
+                value={synopsis}
+                onChange={(e) => setSynopsis(e.target.value)}
+                className="w-full min-h-[150px] resize-none bg-black/40 border-gray-700"
+                placeholder="Describe your world here..."
+              />
+              <Button 
+                onClick={handleSaveChanges}
+                className="bg-blue-500 hover:bg-blue-600 text-white"
               >
-                {editMode ? <Check size={18} /> : <Edit size={18} />}
+                Save Changes
               </Button>
-            </CardHeader>
-            <CardContent>
-              {editMode ? (
-                <div className="space-y-4">
-                  <Textarea
-                    value={synopsis}
-                    onChange={(e) => setSynopsis(e.target.value)}
-                    className="w-full min-h-[150px] resize-none"
-                    placeholder="Describe your world here..."
-                  />
-                  <Button onClick={handleSaveChanges}>Save Changes</Button>
-                </div>
-              ) : (
-                <p>{synopsis || 'No synopsis available.'}</p>
-              )}
-            </CardContent>
-          </Card>
+            </div>
+          ) : (
+            <p>{synopsis || 'No synopsis available.'}</p>
+          )}
+        </CardContent>
+      </Card>
+      
+      {/* Entity Tabs */}
+      <div className="mb-8">
+        <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="bg-black/40 border border-gray-800 mb-4">
+            <TabsTrigger value="realms" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">Realms</TabsTrigger>
+            <TabsTrigger value="locations" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">Locations</TabsTrigger>
+            <TabsTrigger value="factions" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">Factions</TabsTrigger>
+            <TabsTrigger value="characters" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">Characters</TabsTrigger>
+            <TabsTrigger value="items" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">Items</TabsTrigger>
+          </TabsList>
           
-          {/* Timeline */}
-          <Card className="bg-card">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Timeline</CardTitle>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setShowNewEventForm(!showNewEventForm)}
+          {/* Realms Tab */}
+          <TabsContent value="realms" className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold">Your Realms</h2>
+              <Button 
+                size="sm" 
+                onClick={() => window.location.href = `/worlds/${worldId}/realms/create`}
+                className="bg-blue-500 hover:bg-blue-600 text-white"
               >
-                <PlusCircle size={18} />
+                <Plus size={16} className="mr-2" /> Create Realm
               </Button>
-            </CardHeader>
-            <CardContent>
-              {showNewEventForm && (
-                <div className="mb-6 p-4 border border-muted rounded-md space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Year</label>
-                    <Input
-                      value={newYear}
-                      onChange={(e) => setNewYear(e.target.value)}
-                      placeholder="e.g., 1024"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Event</label>
-                    <Textarea
-                      value={newEvent}
-                      onChange={(e) => setNewEvent(e.target.value)}
-                      placeholder="Describe the event"
-                      rows={3}
-                    />
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button onClick={handleAddTimelineEvent}>Add Event</Button>
-                    <Button 
-                      variant="outline" 
-                      onClick={() => {
-                        setShowNewEventForm(false);
-                        setNewYear('');
-                        setNewEvent('');
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              )}
-              
-              {timeline && timeline.length > 0 ? (
-                <div className="space-y-4">
-                  <div className="relative">
-                    {timeline.sort((a, b) => parseInt(a.year) - parseInt(b.year)).map((event, index) => (
-                      <div key={event.id} className="relative pl-8 pb-8">
-                        {/* Timeline line */}
-                        {index < timeline.length - 1 && (
-                          <div className="absolute left-3 top-6 bottom-0 w-0.5 bg-muted"></div>
-                        )}
-                        {/* Timeline dot */}
-                        <div className="absolute left-0 top-1.5 w-6 h-6 rounded-full bg-primary flex items-center justify-center text-xs font-bold">
-                          {index + 1}
-                        </div>
-                        {/* Event content */}
-                        <div>
-                          <h4 className="font-bold text-lg">{event.year}</h4>
-                          <p className="mt-1 text-muted-foreground">{event.description}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <p className="text-muted-foreground text-center py-4">
-                  No timeline events yet. Click the + button to add one.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-        
-        {/* Right Column - Entity Tabs */}
-        <div className="lg:col-span-2">
-          <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid grid-cols-5 mb-4">
-              <TabsTrigger value="realms">Realms</TabsTrigger>
-              <TabsTrigger value="locations">Locations</TabsTrigger>
-              <TabsTrigger value="factions">Factions</TabsTrigger>
-              <TabsTrigger value="characters">Characters</TabsTrigger>
-              <TabsTrigger value="items">Items</TabsTrigger>
-            </TabsList>
+            </div>
             
-            {/* Realms Tab */}
-            <TabsContent value="realms" className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold">Realms</h2>
-                <Button size="sm" onClick={() => window.location.href = `/worlds/${worldId}/realms/create`}>
-                  <Plus size={16} className="mr-2" /> Add Realm
-                </Button>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto">
-                {entities.realms.length > 0 ? (
-                  entities.realms.map(realm => (
-                    <Card key={realm.id} className="bg-card hover:bg-card/80 transition-colors">
+            <div className="bg-black/40 border border-gray-800 p-6 rounded-md">
+              {entities.realms.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto">
+                  {entities.realms.map(realm => (
+                    <Card key={realm.id} className="bg-black/60 hover:bg-black/80 border border-gray-700 transition-colors">
                       <CardHeader className="p-4 pb-2">
                         <CardTitle className="text-lg">{realm.name}</CardTitle>
                       </CardHeader>
                       <CardContent className="p-4">
-                        <p className="text-sm text-muted-foreground mb-4">
+                        <p className="text-sm text-gray-400 mb-4">
                           {realm.details.description}
                         </p>
-                        <Button variant="ghost" className="w-full justify-between">
+                        <Button variant="ghost" className="w-full justify-between hover:bg-blue-500/20">
                           <span>View Details</span>
                           <ArrowRight size={16} />
                         </Button>
                       </CardContent>
                     </Card>
-                  ))
-                ) : (
-                  <p className="text-muted-foreground col-span-2 text-center py-8">
-                    No realms created yet. Click "Add Realm" to create one.
-                  </p>
-                )}
-              </div>
-            </TabsContent>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-gray-400">No realms yet. Click "Create Realm" above to add one.</p>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+          
+          {/* Locations Tab */}
+          <TabsContent value="locations" className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold">Your Locations</h2>
+              <Button 
+                size="sm" 
+                onClick={() => window.location.href = `/worlds/${worldId}/locations/create`}
+                className="bg-blue-500 hover:bg-blue-600 text-white"
+              >
+                <Plus size={16} className="mr-2" /> Create Location
+              </Button>
+            </div>
             
-            {/* Locations Tab */}
-            <TabsContent value="locations" className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold">Locations</h2>
-                <Button size="sm" onClick={() => window.location.href = `/worlds/${worldId}/locations/create`}>
-                  <Plus size={16} className="mr-2" /> Add Location
-                </Button>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto">
-                {entities.locations.length > 0 ? (
-                  entities.locations.map(location => (
-                    <Card key={location.id} className="bg-card hover:bg-card/80 transition-colors">
+            <div className="bg-black/40 border border-gray-800 p-6 rounded-md">
+              {entities.locations.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto">
+                  {entities.locations.map(location => (
+                    <Card key={location.id} className="bg-black/60 hover:bg-black/80 border border-gray-700 transition-colors">
                       <CardHeader className="p-4 pb-2">
                         <CardTitle className="text-lg">{location.name}</CardTitle>
                       </CardHeader>
                       <CardContent className="p-4">
-                        <p className="text-sm text-muted-foreground mb-4">
+                        <p className="text-sm text-gray-400 mb-4">
                           {location.details.description}
                         </p>
-                        <Button variant="ghost" className="w-full justify-between">
+                        <Button variant="ghost" className="w-full justify-between hover:bg-blue-500/20">
                           <span>View Details</span>
                           <ArrowRight size={16} />
                         </Button>
                       </CardContent>
                     </Card>
-                  ))
-                ) : (
-                  <p className="text-muted-foreground col-span-2 text-center py-8">
-                    No locations created yet. Click "Add Location" to create one.
-                  </p>
-                )}
-              </div>
-            </TabsContent>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-gray-400">No locations yet. Click "Create Location" above to add one.</p>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+          
+          {/* Factions Tab */}
+          <TabsContent value="factions" className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold">Your Factions</h2>
+              <Button 
+                size="sm" 
+                onClick={() => window.location.href = `/worlds/${worldId}/factions/create`}
+                className="bg-blue-500 hover:bg-blue-600 text-white"
+              >
+                <Plus size={16} className="mr-2" /> Create Faction
+              </Button>
+            </div>
             
-            {/* Factions Tab */}
-            <TabsContent value="factions" className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold">Factions</h2>
-                <Button size="sm" onClick={() => window.location.href = `/worlds/${worldId}/factions/create`}>
-                  <Plus size={16} className="mr-2" /> Add Faction
-                </Button>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto">
-                {entities.factions.length > 0 ? (
-                  entities.factions.map(faction => (
-                    <Card key={faction.id} className="bg-card hover:bg-card/80 transition-colors">
+            <div className="bg-black/40 border border-gray-800 p-6 rounded-md">
+              {entities.factions.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto">
+                  {entities.factions.map(faction => (
+                    <Card key={faction.id} className="bg-black/60 hover:bg-black/80 border border-gray-700 transition-colors">
                       <CardHeader className="p-4 pb-2">
                         <CardTitle className="text-lg">{faction.name}</CardTitle>
                       </CardHeader>
                       <CardContent className="p-4">
-                        <p className="text-sm text-muted-foreground mb-4">
+                        <p className="text-sm text-gray-400 mb-4">
                           {faction.details.description}
                         </p>
-                        <Button variant="ghost" className="w-full justify-between">
+                        <Button variant="ghost" className="w-full justify-between hover:bg-blue-500/20">
                           <span>View Details</span>
                           <ArrowRight size={16} />
                         </Button>
                       </CardContent>
                     </Card>
-                  ))
-                ) : (
-                  <p className="text-muted-foreground col-span-2 text-center py-8">
-                    No factions created yet. Click "Add Faction" to create one.
-                  </p>
-                )}
-              </div>
-            </TabsContent>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-gray-400">No factions yet. Click "Create Faction" above to add one.</p>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+          
+          {/* Characters Tab */}
+          <TabsContent value="characters" className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold">Your Characters</h2>
+              <Button 
+                size="sm" 
+                onClick={() => window.location.href = `/worlds/${worldId}/characters/create`}
+                className="bg-blue-500 hover:bg-blue-600 text-white"
+              >
+                <Plus size={16} className="mr-2" /> Create Character
+              </Button>
+            </div>
             
-            {/* Characters Tab */}
-            <TabsContent value="characters" className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold">Characters</h2>
-                <Button 
-                  size="sm" 
-                  onClick={() => window.location.href = `/worlds/${worldId}/characters/create`}
-                >
-                  <Plus size={16} className="mr-2" /> Add Character
-                </Button>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto">
-                {entities.characters.length > 0 ? (
-                  entities.characters.map(character => (
-                    <Card key={character.id} className="bg-card hover:bg-card/80 transition-colors">
+            <div className="bg-black/40 border border-gray-800 p-6 rounded-md">
+              {entities.characters.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto">
+                  {entities.characters.map(character => (
+                    <Card key={character.id} className="bg-black/60 hover:bg-black/80 border border-gray-700 transition-colors">
                       <CardHeader className="p-4 pb-2">
                         <CardTitle className="text-lg">{character.name}</CardTitle>
                       </CardHeader>
                       <CardContent className="p-4">
                         <div className="flex space-x-4 mb-3">
-                          <span className="text-xs px-2 py-1 bg-muted rounded-full">
+                          <Badge variant="outline" className="bg-blue-500/20 text-blue-300 border-blue-500/50">
                             {character.details.race}
-                          </span>
-                          <span className="text-xs px-2 py-1 bg-muted rounded-full">
+                          </Badge>
+                          <Badge variant="outline" className="bg-blue-500/20 text-blue-300 border-blue-500/50">
                             {character.details.role}
-                          </span>
+                          </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground mb-4">
+                        <p className="text-sm text-gray-400 mb-4">
                           {character.details.description}
                         </p>
-                        <Button variant="ghost" className="w-full justify-between">
+                        <Button variant="ghost" className="w-full justify-between hover:bg-blue-500/20">
                           <span>View Details</span>
                           <ArrowRight size={16} />
                         </Button>
                       </CardContent>
                     </Card>
-                  ))
-                ) : (
-                  <p className="text-muted-foreground col-span-2 text-center py-8">
-                    No characters created yet. Click "Add Character" to create one.
-                  </p>
-                )}
-              </div>
-            </TabsContent>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-gray-400">No characters yet. Click "Create Character" above to add one.</p>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+          
+          {/* Items Tab */}
+          <TabsContent value="items" className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold">Your Items</h2>
+              <Button 
+                size="sm" 
+                onClick={() => window.location.href = `/worlds/${worldId}/items/create`}
+                className="bg-blue-500 hover:bg-blue-600 text-white"
+              >
+                <Plus size={16} className="mr-2" /> Create Item
+              </Button>
+            </div>
             
-            {/* Items Tab */}
-            <TabsContent value="items" className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold">Items</h2>
-                <Button size="sm" onClick={() => window.location.href = `/worlds/${worldId}/items/create`}>
-                  <Plus size={16} className="mr-2" /> Add Item
-                </Button>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto">
-                {entities.items.length > 0 ? (
-                  entities.items.map(item => (
-                    <Card key={item.id} className="bg-card hover:bg-card/80 transition-colors">
+            <div className="bg-black/40 border border-gray-800 p-6 rounded-md">
+              {entities.items.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto">
+                  {entities.items.map(item => (
+                    <Card key={item.id} className="bg-black/60 hover:bg-black/80 border border-gray-700 transition-colors">
                       <CardHeader className="p-4 pb-2">
                         <CardTitle className="text-lg">{item.name}</CardTitle>
                       </CardHeader>
                       <CardContent className="p-4">
-                        <div className="flex mb-3">
-                          <span className="text-xs px-2 py-1 bg-muted rounded-full">
+                        <div className="mb-3">
+                          <Badge variant="outline" className="bg-blue-500/20 text-blue-300 border-blue-500/50">
                             {item.details.type}
-                          </span>
+                          </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground mb-4">
+                        <p className="text-sm text-gray-400 mb-4">
                           {item.details.description}
                         </p>
-                        <Button variant="ghost" className="w-full justify-between">
+                        <Button variant="ghost" className="w-full justify-between hover:bg-blue-500/20">
                           <span>View Details</span>
                           <ArrowRight size={16} />
                         </Button>
                       </CardContent>
                     </Card>
-                  ))
-                ) : (
-                  <p className="text-muted-foreground col-span-2 text-center py-8">
-                    No items created yet. Click "Add Item" to create one.
-                  </p>
-                )}
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-gray-400">No items yet. Click "Create Item" above to add one.</p>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+      
+      {/* Timeline Section - Moved below entity tabs */}
+      <div className="mt-8">
+        <Card className="bg-black/40 border border-gray-800">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-xl">Timeline</CardTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowNewEventForm(!showNewEventForm)}
+              className="text-gray-400 hover:text-white"
+            >
+              <PlusCircle size={18} />
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {showNewEventForm && (
+              <div className="mb-6 p-4 border border-gray-700 bg-black/60 rounded-md space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Year</label>
+                  <Input
+                    value={newYear}
+                    onChange={(e) => setNewYear(e.target.value)}
+                    placeholder="e.g., 1024"
+                    className="bg-black/40 border-gray-700"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Event</label>
+                  <Textarea
+                    value={newEvent}
+                    onChange={(e) => setNewEvent(e.target.value)}
+                    placeholder="Describe the event"
+                    rows={3}
+                    className="bg-black/40 border-gray-700"
+                  />
+                </div>
+                <div className="flex space-x-2">
+                  <Button 
+                    onClick={handleAddTimelineEvent}
+                    className="bg-blue-500 hover:bg-blue-600 text-white"
+                  >
+                    Add Event
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setShowNewEventForm(false);
+                      setNewYear('');
+                      setNewEvent('');
+                    }}
+                    className="border-gray-600 hover:bg-gray-800"
+                  >
+                    Cancel
+                  </Button>
+                </div>
               </div>
-            </TabsContent>
-          </Tabs>
-        </div>
+            )}
+            
+            {editingEvent && (
+              <div className="mb-6 p-4 border border-gray-700 bg-black/60 rounded-md space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Year</label>
+                  <Input
+                    value={editingEvent.year}
+                    onChange={(e) => setEditingEvent({...editingEvent, year: e.target.value})}
+                    placeholder="e.g., 1024"
+                    className="bg-black/40 border-gray-700"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Event</label>
+                  <Textarea
+                    value={editingEvent.description}
+                    onChange={(e) => setEditingEvent({...editingEvent, description: e.target.value})}
+                    placeholder="Describe the event"
+                    rows={3}
+                    className="bg-black/40 border-gray-700"
+                  />
+                </div>
+                <div className="flex space-x-2">
+                  <Button 
+                    onClick={handleEditTimelineEvent}
+                    className="bg-blue-500 hover:bg-blue-600 text-white"
+                  >
+                    <Save size={16} className="mr-2" /> Save Changes
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setEditingEvent(null)}
+                    className="border-gray-600 hover:bg-gray-800"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+            
+            {timeline && timeline.length > 0 ? (
+              <div className="space-y-4">
+                <div className="relative">
+                  {timeline.sort((a, b) => parseInt(a.year) - parseInt(b.year)).map((event, index) => (
+                    <div key={event.id} className="relative pl-8 pb-8">
+                      {/* Timeline line */}
+                      {index < timeline.length - 1 && (
+                        <div className="absolute left-3 top-6 bottom-0 w-0.5 bg-blue-500/30"></div>
+                      )}
+                      {/* Timeline dot */}
+                      <div className="absolute left-0 top-1.5 w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-xs font-bold">
+                        {index + 1}
+                      </div>
+                      {/* Event content */}
+                      <div className="group">
+                        <h4 className="font-bold text-lg">{event.year}</h4>
+                        <p className="mt-1 text-gray-400">{event.description}</p>
+                        
+                        {/* Edit/Delete buttons */}
+                        <div className="mt-2 space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => setEditingEvent(event)}
+                            className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/20"
+                          >
+                            <Edit size={14} className="mr-1" /> Edit
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => handleDeleteTimelineEvent(event.id)}
+                            className="text-red-400 hover:text-red-300 hover:bg-red-500/20"
+                          >
+                            <Trash size={14} className="mr-1" /> Delete
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="text-center py-8 text-gray-400">
+                No timeline events yet. Click the + button to add one.
+              </p>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </Layout>
   );
