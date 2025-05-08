@@ -16,7 +16,7 @@ export const exportAsImage = async (elementId: string, fileName: string): Promis
       useCORS: true, // Enable CORS for images
       allowTaint: true, // Allow cross-origin images
       scrollX: 0,
-      scrollY: 0,
+      scrollY: -window.scrollY, // Account for page scrolling
       windowWidth: document.documentElement.offsetWidth,
       windowHeight: document.documentElement.offsetHeight
     });
@@ -58,7 +58,7 @@ export const exportAsPDF = async (elementId: string, fileName: string): Promise<
       height: elementHeight,
       width: elementWidth,
       scrollX: 0,
-      scrollY: 0,
+      scrollY: -window.scrollY, // Account for page scrolling
       windowWidth: document.documentElement.offsetWidth,
       windowHeight: document.documentElement.offsetHeight
     });

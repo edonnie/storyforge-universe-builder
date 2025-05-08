@@ -17,11 +17,11 @@ interface StatBlockProps {
 
 const CharacterStatBlock = ({ stats, onSaveField }: StatBlockProps) => {
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       <h2 className="text-2xl font-bold">Stats</h2>
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <label className="text-lg font-medium">HP</label>
+      <div className="grid grid-cols-2 gap-2">
+        <div className="space-y-1">
+          <label className="text-lg font-medium whitespace-nowrap">HP</label>
           <EditableField
             initialValue={stats.hp}
             onSave={(value) => onSaveField('stats.hp', value)}
@@ -29,8 +29,8 @@ const CharacterStatBlock = ({ stats, onSaveField }: StatBlockProps) => {
             className="p-2 rounded hover:bg-muted/50 border border-border/50"
           />
         </div>
-        <div className="space-y-2">
-          <label className="text-lg font-medium">MP</label>
+        <div className="space-y-1">
+          <label className="text-lg font-medium whitespace-nowrap">MP</label>
           <EditableField
             initialValue={stats.mp}
             onSave={(value) => onSaveField('stats.mp', value)}
@@ -38,8 +38,8 @@ const CharacterStatBlock = ({ stats, onSaveField }: StatBlockProps) => {
             className="p-2 rounded hover:bg-muted/50 border border-border/50"
           />
         </div>
-        <div className="space-y-2">
-          <label className="text-lg font-medium">Phys Attack</label>
+        <div className="space-y-1">
+          <label className="text-lg font-medium whitespace-nowrap">Phys Attack</label>
           <EditableField
             initialValue={stats.physAttack}
             onSave={(value) => onSaveField('stats.physAttack', value)}
@@ -47,8 +47,8 @@ const CharacterStatBlock = ({ stats, onSaveField }: StatBlockProps) => {
             className="p-2 rounded hover:bg-muted/50 border border-border/50"
           />
         </div>
-        <div className="space-y-2">
-          <label className="text-lg font-medium">Phys Defense</label>
+        <div className="space-y-1">
+          <label className="text-lg font-medium whitespace-nowrap">Phys Defense</label>
           <EditableField
             initialValue={stats.physDefense}
             onSave={(value) => onSaveField('stats.physDefense', value)}
@@ -56,8 +56,8 @@ const CharacterStatBlock = ({ stats, onSaveField }: StatBlockProps) => {
             className="p-2 rounded hover:bg-muted/50 border border-border/50"
           />
         </div>
-        <div className="space-y-2">
-          <label className="text-lg font-medium">Agility</label>
+        <div className="space-y-1">
+          <label className="text-lg font-medium whitespace-nowrap">Agility</label>
           <EditableField
             initialValue={stats.agility}
             onSave={(value) => onSaveField('stats.agility', value)}
@@ -65,8 +65,8 @@ const CharacterStatBlock = ({ stats, onSaveField }: StatBlockProps) => {
             className="p-2 rounded hover:bg-muted/50 border border-border/50"
           />
         </div>
-        <div className="space-y-2">
-          <label className="text-lg font-medium">Magic Attack</label>
+        <div className="space-y-1">
+          <label className="text-lg font-medium whitespace-nowrap">Magic Attack</label>
           <EditableField
             initialValue={stats.magicAttack}
             onSave={(value) => onSaveField('stats.magicAttack', value)}
@@ -74,8 +74,8 @@ const CharacterStatBlock = ({ stats, onSaveField }: StatBlockProps) => {
             className="p-2 rounded hover:bg-muted/50 border border-border/50"
           />
         </div>
-        <div className="space-y-2">
-          <label className="text-lg font-medium">Magic Defense</label>
+        <div className="space-y-1">
+          <label className="text-lg font-medium whitespace-nowrap">Magic Defense</label>
           <EditableField
             initialValue={stats.magicDefense}
             onSave={(value) => onSaveField('stats.magicDefense', value)}
@@ -83,8 +83,8 @@ const CharacterStatBlock = ({ stats, onSaveField }: StatBlockProps) => {
             className="p-2 rounded hover:bg-muted/50 border border-border/50"
           />
         </div>
-        <div className="space-y-2">
-          <label className="text-lg font-medium">Resist</label>
+        <div className="space-y-1">
+          <label className="text-lg font-medium whitespace-nowrap">Resist</label>
           <EditableField
             initialValue={stats.resist}
             onSave={(value) => onSaveField('stats.resist', value)}

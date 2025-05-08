@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from 'lucide-react';
@@ -9,11 +9,12 @@ import AuthModal from '../components/AuthModal';
 const LandingPage = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('signup');
+  const navigate = useNavigate();
   
-  // Temporary login function, will be replaced with Supabase auth
+  // Temporary login function, will redirect to dashboard
   const handleLogin = () => {
     // Mock successful login
-    window.location.href = '/dashboard';
+    navigate('/dashboard');
   };
   
   const openSignupModal = () => {

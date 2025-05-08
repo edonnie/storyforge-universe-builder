@@ -1,8 +1,6 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Layout from '../components/Layout';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download, FileText, Upload } from 'lucide-react';
 import { exportAsPDF, exportAsImage } from '../utils/exportUtils';
@@ -169,10 +167,7 @@ const CharacterPreview = () => {
             <div className="p-6">
               <div className="flex gap-8">
                 {/* Character Image */}
-                <div 
-                  className="w-56 h-64 bg-gray-800 flex items-center justify-center cursor-pointer"
-                  onClick={handleImageUpload}
-                >
+                <label className="w-56 h-64 bg-gray-800 flex items-center justify-center cursor-pointer relative">
                   {characterImage ? (
                     <img 
                       src={characterImage} 
@@ -189,18 +184,18 @@ const CharacterPreview = () => {
                     ref={fileInputRef}
                     type="file"
                     accept="image/*"
-                    className="hidden"
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     onChange={handleFileChange}
                   />
-                </div>
+                </label>
                 
                 {/* Stats */}
                 <div className="flex-1">
                   <h2 className="text-xl font-semibold uppercase mb-4">STATS</h2>
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     <div className="flex items-center gap-4">
-                      <span className="w-16">HP</span>
-                      <div className="w-full max-w-lg h-2 bg-gray-700 rounded overflow-hidden">
+                      <span className="w-16 whitespace-nowrap">HP</span>
+                      <div className="w-full max-w-xl h-1 bg-gray-700 rounded overflow-hidden">
                         <div
                           className="h-full bg-blue-500"
                           style={{ width: `${getStatPercentage(character.stats.hp)}%` }}
@@ -209,8 +204,8 @@ const CharacterPreview = () => {
                       <span className="w-8 text-right">{character.stats.hp}</span>
                     </div>
                     <div className="flex items-center gap-4">
-                      <span className="w-16">MP</span>
-                      <div className="w-full max-w-lg h-2 bg-gray-700 rounded overflow-hidden">
+                      <span className="w-16 whitespace-nowrap">MP</span>
+                      <div className="w-full max-w-xl h-1 bg-gray-700 rounded overflow-hidden">
                         <div
                           className="h-full bg-blue-500"
                           style={{ width: `${getStatPercentage(character.stats.mp)}%` }}
@@ -219,8 +214,8 @@ const CharacterPreview = () => {
                       <span className="w-8 text-right">{character.stats.mp}</span>
                     </div>
                     <div className="flex items-center gap-4">
-                      <span className="w-16">Phys Atk</span>
-                      <div className="w-full max-w-lg h-2 bg-gray-700 rounded overflow-hidden">
+                      <span className="w-16 whitespace-nowrap">Phys Atk</span>
+                      <div className="w-full max-w-xl h-1 bg-gray-700 rounded overflow-hidden">
                         <div
                           className="h-full bg-blue-500"
                           style={{ width: `${getStatPercentage(character.stats.physAttack)}%` }}
@@ -229,8 +224,8 @@ const CharacterPreview = () => {
                       <span className="w-8 text-right">{character.stats.physAttack}</span>
                     </div>
                     <div className="flex items-center gap-4">
-                      <span className="w-16">Phys Def</span>
-                      <div className="w-full max-w-lg h-2 bg-gray-700 rounded overflow-hidden">
+                      <span className="w-16 whitespace-nowrap">Phys Def</span>
+                      <div className="w-full max-w-xl h-1 bg-gray-700 rounded overflow-hidden">
                         <div
                           className="h-full bg-blue-500"
                           style={{ width: `${getStatPercentage(character.stats.physDefense)}%` }}
@@ -239,8 +234,8 @@ const CharacterPreview = () => {
                       <span className="w-8 text-right">{character.stats.physDefense}</span>
                     </div>
                     <div className="flex items-center gap-4">
-                      <span className="w-16">Agility</span>
-                      <div className="w-full max-w-lg h-2 bg-gray-700 rounded overflow-hidden">
+                      <span className="w-16 whitespace-nowrap">Agility</span>
+                      <div className="w-full max-w-xl h-1 bg-gray-700 rounded overflow-hidden">
                         <div
                           className="h-full bg-blue-500"
                           style={{ width: `${getStatPercentage(character.stats.agility)}%` }}
@@ -249,8 +244,8 @@ const CharacterPreview = () => {
                       <span className="w-8 text-right">{character.stats.agility}</span>
                     </div>
                     <div className="flex items-center gap-4">
-                      <span className="w-16">Mag Atk</span>
-                      <div className="w-full max-w-lg h-2 bg-gray-700 rounded overflow-hidden">
+                      <span className="w-16 whitespace-nowrap">Mag Atk</span>
+                      <div className="w-full max-w-xl h-1 bg-gray-700 rounded overflow-hidden">
                         <div
                           className="h-full bg-blue-500"
                           style={{ width: `${getStatPercentage(character.stats.magicAttack)}%` }}
@@ -259,8 +254,8 @@ const CharacterPreview = () => {
                       <span className="w-8 text-right">{character.stats.magicAttack}</span>
                     </div>
                     <div className="flex items-center gap-4">
-                      <span className="w-16">Mag Def</span>
-                      <div className="w-full max-w-lg h-2 bg-gray-700 rounded overflow-hidden">
+                      <span className="w-16 whitespace-nowrap">Mag Def</span>
+                      <div className="w-full max-w-xl h-1 bg-gray-700 rounded overflow-hidden">
                         <div
                           className="h-full bg-blue-500"
                           style={{ width: `${getStatPercentage(character.stats.magicDefense)}%` }}
@@ -269,8 +264,8 @@ const CharacterPreview = () => {
                       <span className="w-8 text-right">{character.stats.magicDefense}</span>
                     </div>
                     <div className="flex items-center gap-4">
-                      <span className="w-16">Resist</span>
-                      <div className="w-full max-w-lg h-2 bg-gray-700 rounded overflow-hidden">
+                      <span className="w-16 whitespace-nowrap">Resist</span>
+                      <div className="w-full max-w-xl h-1 bg-gray-700 rounded overflow-hidden">
                         <div
                           className="h-full bg-blue-500"
                           style={{ width: `${getStatPercentage(character.stats.resist)}%` }}
