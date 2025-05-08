@@ -1,8 +1,9 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Menu, X, User, LogOut } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
 import AuthModal from './AuthModal';
 
 const Header = () => {
@@ -10,6 +11,7 @@ const Header = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [isLoggedIn, setIsLoggedIn] = useState(false); // Temporary state, will be replaced with Supabase auth
+  const [subscriptionPlan, setSubscriptionPlan] = useState<'free' | 'pro'>('free'); // Mock subscription plan
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   
@@ -27,18 +29,53 @@ const Header = () => {
   const handleLogin = () => {
     setIsLoggedIn(true);
     setIsAuthModalOpen(false);
+    
+    // Mock fetching user subscription from Supabase
+    setTimeout(() => {
+      // Mock data - in real app, this would come from Supabase
+      setSubscriptionPlan('pro');
+    }, 500);
   };
 
   // Temporary logout function, will be replaced with Supabase auth
   const handleLogout = () => {
     setIsLoggedIn(false);
+    setSubscriptionPlan('free');
   };
+  
+  // Check session on component mount (would use Supabase in real implementation)
+  useEffect(() => {
+    // Mock Supabase session check - would be replaced with actual Supabase authentication
+    const checkSession = async () => {
+      // Simulate session check delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Mock session data - in real app, this would be Supabase auth state
+      const hasSession = localStorage.getItem('fateengine_session');
+      
+      if (hasSession === 'true') {
+        setIsLoggedIn(true);
+        setSubscriptionPlan('pro'); // Mock subscription data
+      }
+    };
+    
+    checkSession();
+  }, []);
 
   return (
     <header className="w-full bg-background border-b border-muted sticky top-0 z-50">
       <div className="container mx-auto flex items-center justify-between py-4 px-4 md:px-6">
         <Link to="/" className="flex items-center space-x-2">
-          <span className="text-2xl font-bold text-gradient">FateEngine</span>
+          <div className="flex items-center">
+            <span className="text-2xl font-bold text-gradient">FateEngine</span>
+            {isLoggedIn && subscriptionPlan === 'pro' && (
+              <Badge 
+                className="ml-2 text-[0.7rem] font-bold px-2 py-0.5 bg-gradient-to-r from-[#00bbcc] to-[#007788] border-none"
+              >
+                PRO
+              </Badge>
+            )}
+          </div>
         </Link>
         
         {/* Desktop Navigation */}

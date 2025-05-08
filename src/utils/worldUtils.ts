@@ -5,6 +5,7 @@ export interface World {
   name: string;
   createdAt: string;
   synopsis?: string;
+  timeline?: TimelineEvent[];
 }
 
 export type EntityType = 'realm' | 'location' | 'faction' | 'character' | 'item';
@@ -18,11 +19,28 @@ export interface Entity {
   createdAt: string;
 }
 
+export interface TimelineEvent {
+  id: string;
+  year: string;
+  description: string;
+  createdAt: string;
+}
+
 // These functions will be replaced with Supabase calls in the future
 export const fetchWorlds = async (userId: string): Promise<World[]> => {
   // Mock data for now
   const worlds = [
-    { id: '1', name: 'Eldoria', createdAt: '2023-05-15T12:00:00Z', synopsis: 'A magical realm where ancient powers linger in the shadows.' },
+    { 
+      id: '1', 
+      name: 'Eldoria', 
+      createdAt: '2023-05-15T12:00:00Z', 
+      synopsis: 'A magical realm where ancient powers linger in the shadows.',
+      timeline: [
+        { id: '1', year: '1024', description: 'The Great War between the Northern Kingdom and Eastern Empire begins', createdAt: '2023-05-16T10:00:00Z' },
+        { id: '2', year: '1030', description: 'The Order of the Silver Star is formed to restore peace', createdAt: '2023-05-16T11:00:00Z' },
+        { id: '3', year: '1035', description: 'The Crimson Hand assassinates the Emperor of the East', createdAt: '2023-05-16T12:00:00Z' },
+      ]
+    },
     { id: '2', name: 'Mysthaven', createdAt: '2023-06-22T09:30:00Z', synopsis: 'A coastal city-state known for its arcane universities and merchant fleets.' },
     { id: '3', name: 'Astralheim', createdAt: '2023-07-10T15:45:00Z', synopsis: 'A world where the boundaries between planes are thin and extraplanar beings are common.' },
   ];
@@ -34,7 +52,17 @@ export const fetchWorlds = async (userId: string): Promise<World[]> => {
 
 export const fetchWorldById = async (worldId: string): Promise<World | null> => {
   const worlds = {
-    '1': { id: '1', name: 'Eldoria', createdAt: '2023-05-15T12:00:00Z', synopsis: 'A magical realm where ancient powers linger in the shadows.' },
+    '1': { 
+      id: '1', 
+      name: 'Eldoria', 
+      createdAt: '2023-05-15T12:00:00Z', 
+      synopsis: 'A magical realm where ancient powers linger in the shadows.',
+      timeline: [
+        { id: '1', year: '1024', description: 'The Great War between the Northern Kingdom and Eastern Empire begins', createdAt: '2023-05-16T10:00:00Z' },
+        { id: '2', year: '1030', description: 'The Order of the Silver Star is formed to restore peace', createdAt: '2023-05-16T11:00:00Z' },
+        { id: '3', year: '1035', description: 'The Crimson Hand assassinates the Emperor of the East', createdAt: '2023-05-16T12:00:00Z' },
+      ]
+    },
     '2': { id: '2', name: 'Mysthaven', createdAt: '2023-06-22T09:30:00Z', synopsis: 'A coastal city-state known for its arcane universities and merchant fleets.' },
     '3': { id: '3', name: 'Astralheim', createdAt: '2023-07-10T15:45:00Z', synopsis: 'A world where the boundaries between planes are thin and extraplanar beings are common.' },
   };
@@ -97,12 +125,12 @@ export const createWorld = async (userId: string, name: string): Promise<World> 
   });
 };
 
-export const createEntity = async (worldId: string, name: string, type: string, details: any): Promise<Entity> => {
+export const createEntity = async (worldId: string, name: string, type: EntityType, details: any): Promise<Entity> => {
   const newEntity = {
     id: Math.random().toString(36).substr(2, 9),
     worldId,
     name,
-    type: type as 'realm' | 'location' | 'faction' | 'character' | 'item',
+    type,
     details,
     createdAt: new Date().toISOString(),
   };
@@ -121,7 +149,38 @@ export const updateWorld = async (worldId: string, updates: Partial<World>): Pro
         name: updates.name || 'Unknown World',
         createdAt: new Date().toISOString(),
         synopsis: updates.synopsis,
+        timeline: updates.timeline,
       });
     }, 300);
+  });
+};
+
+export const updateEntity = async (entityId: string, worldId: string, updates: Partial<Entity>): Promise<Entity> => {
+  // This would be a Supabase update call in the real implementation
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve({
+        id: entityId,
+        worldId,
+        name: updates.name || 'Unknown Entity',
+        type: updates.type || 'character',
+        details: updates.details || {},
+        createdAt: new Date().toISOString(),
+      });
+    }, 300);
+  });
+};
+
+export const addTimelineEvent = async (worldId: string, year: string, description: string): Promise<TimelineEvent> => {
+  const newEvent = {
+    id: Math.random().toString(36).substr(2, 9),
+    year,
+    description,
+    createdAt: new Date().toISOString(),
+  };
+  
+  // This would update the timeline array in the Supabase world record
+  return new Promise(resolve => {
+    setTimeout(() => resolve(newEvent), 300);
   });
 };

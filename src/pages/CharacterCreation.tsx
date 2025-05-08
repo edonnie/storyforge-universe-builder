@@ -1,12 +1,16 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import Layout from '../components/Layout';
+import EditableField from '../components/EditableField';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Trash, Save, Send } from 'lucide-react';
+import { ArrowLeft, Trash, Save, Send, Download, FileText } from 'lucide-react';
+import { useToast } from "@/hooks/use-toast";
+import { updateEntity } from '../utils/worldUtils';
+import { exportAsPDF, exportAsImage } from '../utils/exportUtils';
 
 // Define the ChatMessage type to ensure proper typing
 type ChatMessageRole = "user" | "assistant";
@@ -25,9 +29,11 @@ const CharacterCreation = () => {
     }
   ]);
   const [inputMessage, setInputMessage] = useState('');
+  const { toast } = useToast();
   
   // Character state
   const [character, setCharacter] = useState({
+    id: '',
     name: '',
     race: '',
     role: '',
@@ -37,6 +43,22 @@ const CharacterCreation = () => {
     goals: '',
     relationships: ''
   });
+  
+  useEffect(() => {
+    // In a real implementation, we would fetch the character data if editing an existing character
+    // For now, we'll use mock data
+    setCharacter({
+      id: `char_${Math.random().toString(36).substr(2, 9)}`,
+      name: 'Alaric Stormwind',
+      race: 'Half-Elf',
+      role: 'Ranger',
+      personality: 'Stoic but compassionate, prefers solitude but fiercely loyal to allies.',
+      appearance: 'Tall with slight elven features, emerald eyes, and dark hair with a silver streak.',
+      background: 'Raised in the border forests by his human mother after his elven father disappeared on a dangerous mission.',
+      goals: 'To discover what happened to his father and protect the ancient forests from corruption.',
+      relationships: 'Mentored by an old human ranger named Harlon. Rivalry with Thorne Ironheart, a dwarf who blames elves for his clan's misfortune.'
+    });
+  }, [worldId]);
   
   const handleMessageSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,16 +105,57 @@ Would you like me to elaborate on any of these aspects?`
     }, 1000);
   };
   
-  const handleInputChange = (field: keyof typeof character, value: string) => {
+  const handleSaveField = async (field: keyof typeof character, value: string): Promise<void> => {
+    // Update local state immediately
     setCharacter({
       ...character,
       [field]: value
     });
+    
+    // In a real app, this would update the character in Supabase
+    if (worldId && character.id) {
+      try {
+        await updateEntity(character.id, worldId, {
+          details: {
+            ...character,
+            [field]: value
+          }
+        });
+      } catch (error) {
+        console.error(`Failed to update ${field}:`, error);
+        throw error;
+      }
+    }
   };
   
   const handleSaveCharacter = () => {
     // This will be integrated with Supabase in the future
-    alert('Character saved successfully!');
+    toast({
+      title: "Character saved",
+      description: "Your character has been saved successfully",
+    });
+  };
+  
+  const handleExport = async (type: 'pdf' | 'image') => {
+    try {
+      if (type === 'pdf') {
+        await exportAsPDF('character-sheet', `${character.name || 'character'}`);
+      } else {
+        await exportAsImage('character-sheet', `${character.name || 'character'}`);
+      }
+      
+      toast({
+        title: "Export successful",
+        description: `Character exported as ${type.toUpperCase()}`,
+      });
+    } catch (error) {
+      console.error(`Failed to export as ${type}:`, error);
+      toast({
+        title: "Export failed",
+        description: `Could not export character as ${type}`,
+        variant: "destructive",
+      });
+    }
   };
   
   return (
@@ -162,11 +225,20 @@ Would you like me to elaborate on any of these aspects?`
               <Save size={16} className="mr-2" /> Save Character
             </Button>
           </div>
+          
+          <div className="mt-4 grid grid-cols-2 gap-4">
+            <Button variant="outline" className="w-full" onClick={() => handleExport('pdf')}>
+              <FileText size={16} className="mr-2" /> Export as PDF
+            </Button>
+            <Button variant="outline" className="w-full" onClick={() => handleExport('image')}>
+              <Download size={16} className="mr-2" /> Export as Image
+            </Button>
+          </div>
         </div>
         
         {/* Right Column - Character Details */}
         <div className="space-y-4">
-          <Card className="bg-card">
+          <Card id="character-sheet" className="bg-card">
             <CardHeader>
               <CardTitle>Character Details</CardTitle>
             </CardHeader>
@@ -175,26 +247,29 @@ Would you like me to elaborate on any of these aspects?`
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Name</label>
-                  <Input
-                    value={character.name}
-                    onChange={(e) => handleInputChange('name', e.target.value)}
+                  <EditableField
+                    initialValue={character.name}
+                    onSave={(value) => handleSaveField('name', value)}
                     placeholder="Character name"
+                    className="p-2 rounded hover:bg-muted/50"
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Race</label>
-                  <Input
-                    value={character.race}
-                    onChange={(e) => handleInputChange('race', e.target.value)}
+                  <EditableField
+                    initialValue={character.race}
+                    onSave={(value) => handleSaveField('race', value)}
                     placeholder="Race/Species"
+                    className="p-2 rounded hover:bg-muted/50"
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Role</label>
-                  <Input
-                    value={character.role}
-                    onChange={(e) => handleInputChange('role', e.target.value)}
+                  <EditableField
+                    initialValue={character.role}
+                    onSave={(value) => handleSaveField('role', value)}
                     placeholder="Class/Occupation"
+                    className="p-2 rounded hover:bg-muted/50"
                   />
                 </div>
               </div>
@@ -202,51 +277,56 @@ Would you like me to elaborate on any of these aspects?`
               {/* Character Description */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Personality</label>
-                <Textarea
-                  value={character.personality}
-                  onChange={(e) => handleInputChange('personality', e.target.value)}
+                <EditableField
+                  initialValue={character.personality}
+                  onSave={(value) => handleSaveField('personality', value)}
                   placeholder="Describe the character's personality traits"
-                  rows={3}
+                  className="p-2 rounded hover:bg-muted/50"
+                  multiline
                 />
               </div>
               
               <div className="space-y-2">
                 <label className="text-sm font-medium">Appearance</label>
-                <Textarea
-                  value={character.appearance}
-                  onChange={(e) => handleInputChange('appearance', e.target.value)}
+                <EditableField
+                  initialValue={character.appearance}
+                  onSave={(value) => handleSaveField('appearance', value)}
                   placeholder="Describe the character's appearance"
-                  rows={3}
+                  className="p-2 rounded hover:bg-muted/50"
+                  multiline
                 />
               </div>
               
               <div className="space-y-2">
                 <label className="text-sm font-medium">Background</label>
-                <Textarea
-                  value={character.background}
-                  onChange={(e) => handleInputChange('background', e.target.value)}
+                <EditableField
+                  initialValue={character.background}
+                  onSave={(value) => handleSaveField('background', value)}
                   placeholder="Describe the character's history and background"
-                  rows={3}
+                  className="p-2 rounded hover:bg-muted/50"
+                  multiline
                 />
               </div>
               
               <div className="space-y-2">
                 <label className="text-sm font-medium">Goals</label>
-                <Textarea
-                  value={character.goals}
-                  onChange={(e) => handleInputChange('goals', e.target.value)}
+                <EditableField
+                  initialValue={character.goals}
+                  onSave={(value) => handleSaveField('goals', value)}
                   placeholder="What are the character's motivations and goals?"
-                  rows={3}
+                  className="p-2 rounded hover:bg-muted/50"
+                  multiline
                 />
               </div>
               
               <div className="space-y-2">
                 <label className="text-sm font-medium">Relationships</label>
-                <Textarea
-                  value={character.relationships}
-                  onChange={(e) => handleInputChange('relationships', e.target.value)}
+                <EditableField
+                  initialValue={character.relationships}
+                  onSave={(value) => handleSaveField('relationships', value)}
                   placeholder="Describe the character's relationships with other characters"
-                  rows={3}
+                  className="p-2 rounded hover:bg-muted/50"
+                  multiline
                 />
               </div>
             </CardContent>
