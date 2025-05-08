@@ -10,6 +10,7 @@ import LandingPage from './pages/LandingPage';
 import Dashboard from './pages/Dashboard';
 import WorldDetail from './pages/WorldDetail';
 import CharacterCreation from './pages/CharacterCreation';
+import CharacterPreview from './pages/CharacterPreview';
 import Plans from './pages/Plans';
 import Support from './pages/Support';
 import NotFound from './pages/NotFound';
@@ -27,6 +28,8 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/worlds/:worldId" element={<WorldDetail />} />
           <Route path="/worlds/:worldId/characters/create" element={<CharacterCreation />} />
+          <Route path="/worlds/:worldId/characters/:characterId" element={<CharacterPreview />} />
+          <Route path="/worlds/:worldId/characters/:characterId/edit" element={<CharacterCreation />} />
           <Route path="/plans" element={<Plans />} />
           <Route path="/support" element={<Support />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

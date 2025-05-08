@@ -5,47 +5,10 @@ import Layout from '../components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download, FileText } from 'lucide-react';
+import { Progress } from "@/components/ui/progress";
 import { exportAsPDF, exportAsImage } from '../utils/exportUtils';
 import { useToast } from "@/hooks/use-toast";
-
-// Define the Character interface with nested fields
-interface Character {
-  id: string;
-  name: string;
-  race: string;
-  jobs: string;
-  role: string;
-  parents: string;
-  personality: {
-    mbti: string;
-    enneagram: string;
-    alignment: string;
-    traits: string;
-  };
-  bio: string;
-  equipment: {
-    weapon: string;
-    armor: string;
-  };
-  style: string;
-  stats: {
-    hp: string;
-    mp: string;
-    physAttack: string;
-    physDefense: string;
-    agility: string;
-    magicAttack: string;
-    magicDefense: string;
-    resist: string;
-  };
-  abilities: {
-    mainAbility: string;
-    signatureSkills: string;
-    passives: string;
-  };
-  notes: string;
-  relationships: string;
-}
+import { Character } from '../components/character/CharacterSheet';
 
 const CharacterPreview = () => {
   const { worldId, characterId } = useParams<{ worldId: string; characterId: string }>();
@@ -62,40 +25,40 @@ const CharacterPreview = () => {
     setTimeout(() => {
       setCharacter({
         id: characterId || 'char_default',
-        name: 'Alaric Stormwind',
-        race: 'Half-Elf',
-        jobs: 'Scout, Hunter',
-        role: 'Ranger',
-        parents: 'Elara (Human), Thranduil (Elf)',
+        name: 'Kaelen Thorne',
+        race: 'Human',
+        jobs: 'Warrior, Scout',
+        role: 'Tank / DPS',
+        parents: 'Eamon Thorne and Lila Thorne',
         personality: {
-          mbti: 'ISTP',
-          enneagram: '5w4',
+          mbti: 'ESTJ',
+          enneagram: '8w7',
           alignment: 'Neutral Good',
-          traits: 'Stoic, Observant, Independent, Resourceful, Cautious',
+          traits: 'Brave, Resilient, Tactical, Stubborn, Honorable',
         },
-        bio: 'Raised in the border forests by his human mother after his elven father disappeared on a dangerous mission. Alaric learned to survive in the wilderness from an early age.',
+        bio: 'Raised in a border village, Kaelen trained from a young age to defend his home. He has fought in numerous skirmishes and seeks to prove his strength through honorable combat.',
         equipment: {
-          weapon: 'Windwhisper Bow (Enchanted Longbow)',
-          armor: 'Forest Warden Leathers',
+          weapon: 'Dual-handed broadsword with intricate runes along the blade',
+          armor: 'Heavy plate armor with reinforced leather padding and a crimson crest',
         },
-        style: 'Prefers earthy tones and practical clothing. His cloak is adorned with feathers from various birds he has encountered.',
+        style: 'Short, messy brown hair; sharp green eyes; practical steel-gray armor with red accents, leather boots, and a tactical cape',
         stats: {
-          hp: '75',
-          mp: '45',
-          physAttack: '68',
-          physDefense: '55',
-          agility: '80',
-          magicAttack: '40',
-          magicDefense: '50',
-          resist: '60',
+          hp: '46',
+          mp: '10',
+          physAttack: '45',
+          physDefense: '44',
+          agility: '28',
+          magicAttack: '12',
+          magicDefense: '15',
+          resist: '17',
         },
         abilities: {
-          mainAbility: 'Nature\'s Sentinel',
-          signatureSkills: 'Precise Shot, Shadow Step, Beast Speech, Trailblazing',
-          passives: 'Keen Senses, Forest Affinity, Elven Grace',
+          mainAbility: 'Banner of Valor',
+          signatureSkills: 'Power Strike, Shield Bash, Rallying Cry',
+          passives: 'Hardiness, Combat Reflexes, Armor Mastery',
         },
-        notes: 'Carries a journal filled with sketches of plants and animals. Has a small scar above his right eyebrow from a childhood accident.',
-        relationships: "Mentored by an old human ranger named Harlon. Rivalry with Thorne Ironheart, a dwarf who blames elves for his clan's misfortune.",
+        notes: '• Known for his leadership on the battlefield\n• Has a rivalry with a rival warrior, Morgan\n• Dreams of uniting the scattered clans of the region',
+        relationships: '• Eamon Thorne — Father, retired blacksmith and veteran fighter\n• Lila Thorne — Mother, healer and village healer\n• Morgan — Rival warrior, often competes in tournaments',
       });
       setLoading(false);
     }, 1000);
@@ -123,24 +86,30 @@ const CharacterPreview = () => {
     }
   };
 
+  // Convert stat value to percentage for Progress component
+  const getStatPercentage = (value: string): number => {
+    const num = parseInt(value, 10);
+    return Math.min(Math.max(num, 0), 100);
+  };
+
   return (
     <Layout>
-      <div className="mb-6">
+      <div className="container mx-auto py-6">
         <Button 
           variant="outline" 
-          onClick={() => window.location.href = `/worlds/${worldId}`}
+          onClick={() => window.history.back()}
           className="mb-4"
         >
-          <ArrowLeft size={16} className="mr-2" /> Back to World
+          <ArrowLeft size={16} className="mr-2" /> Back
         </Button>
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Character Preview</h1>
           <div className="space-x-2">
             <Button variant="outline" onClick={() => handleExport('pdf')}>
-              <FileText size={16} className="mr-2" /> Export as PDF
+              <FileText size={16} className="mr-2" /> Download PDF
             </Button>
             <Button variant="outline" onClick={() => handleExport('image')}>
-              <Download size={16} className="mr-2" /> Export as Image
+              <Download size={16} className="mr-2" /> Download Image
             </Button>
             {worldId && characterId && (
               <Button>
@@ -158,158 +127,139 @@ const CharacterPreview = () => {
           <p>Loading character data...</p>
         </div>
       ) : character ? (
-        <div id="character-sheet-preview">
-          <Card className="bg-card">
+        <div id="character-sheet-preview" className="container mx-auto pb-12">
+          <Card className="bg-[#0a0a0a] text-white mb-8">
             <CardHeader>
-              <CardTitle>{character.name}</CardTitle>
+              <div className="flex justify-between items-center">
+                <div className="text-blue-400">FateEngine</div>
+                <div>Character Profile</div>
+              </div>
+              <CardTitle className="mt-6 text-4xl font-bold">{character.name}</CardTitle>
+              <div className="flex gap-6 mt-2">
+                <div><span className="text-gray-400">Race:</span> {character.race}</div>
+                <div><span className="text-gray-400">Jobs:</span> {character.jobs}</div>
+                <div><span className="text-gray-400">Role:</span> {character.role}</div>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-6">
-              {/* 1. Name, Race, Jobs */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Name</p>
-                  <p className="mt-1">{character.name}</p>
+            <CardContent className="space-y-8">
+              <div className="flex gap-8">
+                {/* Character Image */}
+                <div className="w-64 h-64 bg-gray-800 flex items-center justify-center">
+                  [Character Image]
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Race</p>
-                  <p className="mt-1">{character.race}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Jobs</p>
-                  <p className="mt-1">{character.jobs}</p>
+                
+                {/* Stats */}
+                <div className="flex-1">
+                  <h2 className="text-xl font-bold mb-4">STATS</h2>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <span className="w-24">HP</span>
+                      <Progress value={getStatPercentage(character.stats.hp)} className="flex-1 h-2" />
+                      <span className="w-8 text-right">{character.stats.hp}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-24">MP</span>
+                      <Progress value={getStatPercentage(character.stats.mp)} className="flex-1 h-2" />
+                      <span className="w-8 text-right">{character.stats.mp}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-24">Phys Atk</span>
+                      <Progress value={getStatPercentage(character.stats.physAttack)} className="flex-1 h-2" />
+                      <span className="w-8 text-right">{character.stats.physAttack}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-24">Phys Def</span>
+                      <Progress value={getStatPercentage(character.stats.physDefense)} className="flex-1 h-2" />
+                      <span className="w-8 text-right">{character.stats.physDefense}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-24">Agility</span>
+                      <Progress value={getStatPercentage(character.stats.agility)} className="flex-1 h-2" />
+                      <span className="w-8 text-right">{character.stats.agility}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-24">Mag Atk</span>
+                      <Progress value={getStatPercentage(character.stats.magicAttack)} className="flex-1 h-2" />
+                      <span className="w-8 text-right">{character.stats.magicAttack}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-24">Mag Def</span>
+                      <Progress value={getStatPercentage(character.stats.magicDefense)} className="flex-1 h-2" />
+                      <span className="w-8 text-right">{character.stats.magicDefense}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-24">Resist</span>
+                      <Progress value={getStatPercentage(character.stats.resist)} className="flex-1 h-2" />
+                      <span className="w-8 text-right">{character.stats.resist}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
               
-              {/* 2. Role, Parents */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Role</p>
-                  <p className="mt-1">{character.role}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Parents</p>
-                  <p className="mt-1">{character.parents}</p>
-                </div>
-              </div>
-              
-              {/* 3. Personality Block */}
-              <div className="bg-muted/10 p-4 rounded-md">
-                <h3 className="text-md font-semibold mb-3">Personality</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">MBTI</p>
-                    <p className="mt-1">{character.personality.mbti}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Enneagram</p>
-                    <p className="mt-1">{character.personality.enneagram}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Alignment</p>
-                    <p className="mt-1">{character.personality.alignment}</p>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Traits</p>
-                  <p className="mt-1">{character.personality.traits}</p>
-                </div>
-              </div>
-              
-              {/* 4. Bio */}
+              {/* Personality */}
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Biography</p>
-                <p className="mt-1 whitespace-pre-line">{character.bio}</p>
+                <h2 className="text-xl font-bold mb-4">PERSONALITY</h2>
+                <div className="space-y-3">
+                  <div><span className="text-gray-400">MBTI:</span> {character.personality.mbti}</div>
+                  <div><span className="text-gray-400">Enneagram:</span> {character.personality.enneagram}</div>
+                  <div><span className="text-gray-400">Alignment:</span> {character.personality.alignment}</div>
+                  <div><span className="text-gray-400">Traits:</span> {character.personality.traits}</div>
+                </div>
               </div>
               
-              {/* 5. Equipment */}
-              <div className="bg-muted/10 p-4 rounded-md">
-                <h3 className="text-md font-semibold mb-3">Equipment</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Biography */}
+              <div>
+                <h2 className="text-xl font-bold mb-4">BIOGRAPHY</h2>
+                <div className="space-y-3">
+                  <div><span className="text-gray-400">Parents:</span> {character.parents}</div>
+                  <div className="whitespace-pre-line">{character.bio}</div>
+                </div>
+              </div>
+              
+              {/* Abilities */}
+              <div>
+                <h2 className="text-xl font-bold mb-4">ABILITIES</h2>
+                <div className="space-y-3">
+                  <div><span className="text-gray-400">Main Ability:</span> {character.abilities.mainAbility}</div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Weapon</p>
-                    <p className="mt-1">{character.equipment.weapon}</p>
+                    <div className="text-gray-400 mb-1">Signature Skills:</div>
+                    <div className="whitespace-pre-line ml-4">
+                      {character.abilities.signatureSkills.split(',').map((skill, i) => (
+                        <div key={i}>• {skill.trim()}</div>
+                      ))}
+                    </div>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Armor</p>
-                    <p className="mt-1">{character.equipment.armor}</p>
+                    <div className="text-gray-400 mb-1">Passives:</div>
+                    <div className="whitespace-pre-line ml-4">
+                      {character.abilities.passives.split(',').map((passive, i) => (
+                        <div key={i}>• {passive.trim()}</div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
               
-              {/* 6. Style */}
+              {/* Equipment & Style */}
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Style</p>
-                <p className="mt-1 whitespace-pre-line">{character.style}</p>
-              </div>
-              
-              {/* 7. Stats */}
-              <div className="bg-muted/10 p-4 rounded-md">
-                <h3 className="text-md font-semibold mb-3">Stats</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">HP</p>
-                    <p className="mt-1">{character.stats.hp}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">MP</p>
-                    <p className="mt-1">{character.stats.mp}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Phys Attack</p>
-                    <p className="mt-1">{character.stats.physAttack}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Phys Defense</p>
-                    <p className="mt-1">{character.stats.physDefense}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Agility</p>
-                    <p className="mt-1">{character.stats.agility}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Magic Attack</p>
-                    <p className="mt-1">{character.stats.magicAttack}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Magic Defense</p>
-                    <p className="mt-1">{character.stats.magicDefense}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Resist</p>
-                    <p className="mt-1">{character.stats.resist}</p>
-                  </div>
+                <h2 className="text-xl font-bold mb-4">EQUIPMENT & STYLE</h2>
+                <div className="space-y-3">
+                  <div><span className="text-gray-400">Weapon:</span> {character.equipment.weapon}</div>
+                  <div><span className="text-gray-400">Armor:</span> {character.equipment.armor}</div>
+                  <div><span className="text-gray-400">Style:</span> {character.style}</div>
                 </div>
               </div>
               
-              {/* 8. Abilities */}
-              <div className="bg-muted/10 p-4 rounded-md">
-                <h3 className="text-md font-semibold mb-3">Abilities</h3>
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Main Ability</p>
-                    <p className="mt-1">{character.abilities.mainAbility}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Signature Skills</p>
-                    <p className="mt-1 whitespace-pre-line">{character.abilities.signatureSkills}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Passives</p>
-                    <p className="mt-1 whitespace-pre-line">{character.abilities.passives}</p>
-                  </div>
-                </div>
+              {/* Notes */}
+              <div>
+                <h2 className="text-xl font-bold mb-4">NOTES</h2>
+                <div className="whitespace-pre-line">{character.notes}</div>
               </div>
               
-              {/* 9. Notes */}
+              {/* Relationships */}
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Notes</p>
-                <p className="mt-1 whitespace-pre-line">{character.notes}</p>
-              </div>
-              
-              {/* 10. Relationships */}
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Relationships</p>
-                <p className="mt-1 whitespace-pre-line">{character.relationships}</p>
+                <h2 className="text-xl font-bold mb-4">RELATIONSHIPS</h2>
+                <div className="whitespace-pre-line">{character.relationships}</div>
               </div>
             </CardContent>
           </Card>

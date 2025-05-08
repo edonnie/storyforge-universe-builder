@@ -1,7 +1,7 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useNavigate } from 'react-router-dom';
 import EditableField from '../EditableField';
 import CharacterStatBlock from './CharacterStatBlock';
 import CharacterPersonality from './CharacterPersonality';
@@ -52,6 +52,20 @@ interface CharacterSheetProps {
 }
 
 const CharacterSheet = ({ character, onSaveField }: CharacterSheetProps) => {
+  const navigate = useNavigate();
+
+  const handlePreviewExport = () => {
+    // Navigate to the preview page
+    if (character && character.id) {
+      // Extract worldId from URL
+      const pathParts = window.location.pathname.split('/');
+      const worldIdIndex = pathParts.indexOf('worlds') + 1;
+      const worldId = pathParts[worldIdIndex];
+      
+      navigate(`/worlds/${worldId}/characters/${character.id}`);
+    }
+  };
+
   return (
     <div className="hidden lg:block w-1/2 h-full overflow-hidden">
       <ScrollArea className="h-full">
@@ -216,7 +230,7 @@ const CharacterSheet = ({ character, onSaveField }: CharacterSheetProps) => {
       
       {/* Preview & Export Button (Bottom Right) */}
       <div className="absolute bottom-4 right-4">
-        <Button variant="default" className="gap-2">
+        <Button variant="default" className="gap-2" onClick={handlePreviewExport}>
           Preview & Export
         </Button>
       </div>
