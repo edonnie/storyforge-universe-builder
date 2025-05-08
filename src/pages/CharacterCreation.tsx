@@ -235,77 +235,102 @@ Would you like me to elaborate on any of these aspects?`
           </div>
         </div>
         
-{/* Right Column - Character Details */}
-<div className="space-y-4">
-  <Card id="character-sheet" className="bg-card">
-    <CardHeader>
-      <CardTitle>Character Details</CardTitle>
-    </CardHeader>
-    <CardContent className="space-y-4">
-
-      {/* Row 1: Name, Race, Jobs */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <EditableField label="Name" initialValue={character.name} onSave={(v) => handleSaveField('name', v)} />
-        <EditableField label="Race" initialValue={character.race} onSave={(v) => handleSaveField('race', v)} />
-        <EditableField label="Jobs" initialValue={character.jobs} onSave={(v) => handleSaveField('jobs', v)} />
-      </div>
-
-      {/* Row 2: Role, Parents */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <EditableField label="Role" initialValue={character.role} onSave={(v) => handleSaveField('role', v)} />
-        <EditableField label="Parents" initialValue={character.parents} onSave={(v) => handleSaveField('parents', v)} />
-      </div>
-
-      {/* Personality Block */}
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Personality</label>
-        <EditableField label="MBTI" initialValue={character.personality?.mbti} onSave={(v) => handleSaveField('personality.mbti', v)} />
-        <EditableField label="Enneagram" initialValue={character.personality?.enneagram} onSave={(v) => handleSaveField('personality.enneagram', v)} />
-        <EditableField label="Alignment" initialValue={character.personality?.alignment} onSave={(v) => handleSaveField('personality.alignment', v)} />
-        <EditableField label="Traits" initialValue={character.personality?.traits} onSave={(v) => handleSaveField('personality.traits', v)} multiline />
-      </div>
-
-      {/* Bio */}
-      <EditableField label="Bio" initialValue={character.bio} onSave={(v) => handleSaveField('bio', v)} multiline />
-
-      {/* Equipment */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <EditableField label="Weapon" initialValue={character.weapon} onSave={(v) => handleSaveField('weapon', v)} />
-        <EditableField label="Armor" initialValue={character.armor} onSave={(v) => handleSaveField('armor', v)} />
-      </div>
-
-      {/* Style */}
-      <EditableField label="Style" initialValue={character.style} onSave={(v) => handleSaveField('style', v)} multiline />
-
-      {/* Stats */}
-      <div>
-        <label className="text-sm font-medium">Stats</label>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-2">
-          {['hp','mp','physAttack','physDefense','agility','magicAttack','magicDefense','resist'].map((key) => (
-            <EditableField
-              key={key}
-              label={key.toUpperCase()}
-              initialValue={character.stats?.[key] || '0'}
-              onSave={(v) => handleSaveField(`stats.${key}`, v)}
-            />
-          ))}
+        {/* Right Column - Character Details */}
+        <div className="space-y-4">
+          <Card id="character-sheet" className="bg-card">
+            <CardHeader>
+              <CardTitle>Character Details</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Basic Details */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Name</label>
+                  <EditableField
+                    initialValue={character.name}
+                    onSave={(value) => handleSaveField('name', value)}
+                    placeholder="Character name"
+                    className="p-2 rounded hover:bg-muted/50"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Race</label>
+                  <EditableField
+                    initialValue={character.race}
+                    onSave={(value) => handleSaveField('race', value)}
+                    placeholder="Race/Species"
+                    className="p-2 rounded hover:bg-muted/50"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Role</label>
+                  <EditableField
+                    initialValue={character.role}
+                    onSave={(value) => handleSaveField('role', value)}
+                    placeholder="Class/Occupation"
+                    className="p-2 rounded hover:bg-muted/50"
+                  />
+                </div>
+              </div>
+              
+              {/* Character Description */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Personality</label>
+                <EditableField
+                  initialValue={character.personality}
+                  onSave={(value) => handleSaveField('personality', value)}
+                  placeholder="Describe the character's personality traits"
+                  className="p-2 rounded hover:bg-muted/50"
+                  multiline
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Appearance</label>
+                <EditableField
+                  initialValue={character.appearance}
+                  onSave={(value) => handleSaveField('appearance', value)}
+                  placeholder="Describe the character's appearance"
+                  className="p-2 rounded hover:bg-muted/50"
+                  multiline
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Background</label>
+                <EditableField
+                  initialValue={character.background}
+                  onSave={(value) => handleSaveField('background', value)}
+                  placeholder="Describe the character's history and background"
+                  className="p-2 rounded hover:bg-muted/50"
+                  multiline
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Goals</label>
+                <EditableField
+                  initialValue={character.goals}
+                  onSave={(value) => handleSaveField('goals', value)}
+                  placeholder="What are the character's motivations and goals?"
+                  className="p-2 rounded hover:bg-muted/50"
+                  multiline
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Relationships</label>
+                <EditableField
+                  initialValue={character.relationships}
+                  onSave={(value) => handleSaveField('relationships', value)}
+                  placeholder="Describe the character's relationships with other characters"
+                  className="p-2 rounded hover:bg-muted/50"
+                  multiline
+                />
+              </div>
+            </CardContent>
+          </Card>
         </div>
-      </div>
-
-      {/* Abilities */}
-      <EditableField label="Main Ability" initialValue={character.mainAbility} onSave={(v) => handleSaveField('mainAbility', v)} />
-      <EditableField label="Signature Skills" initialValue={character.signatureSkills} onSave={(v) => handleSaveField('signatureSkills', v)} multiline />
-      <EditableField label="Passives" initialValue={character.passives} onSave={(v) => handleSaveField('passives', v)} multiline />
-
-      {/* Notes and Relationships */}
-      <EditableField label="Notes" initialValue={character.notes} onSave={(v) => handleSaveField('notes', v)} multiline />
-      <EditableField label="Relationships" initialValue={character.relationships} onSave={(v) => handleSaveField('relationships', v)} multiline />
-
-      {/* Optional Story */}
-      <EditableField label="Story" initialValue={character.story} onSave={(v) => handleSaveField('story', v)} multiline />
-    </CardContent>
-  </Card>
-</div>
       </div>
     </Layout>
   );
