@@ -5,7 +5,6 @@ import Layout from '../components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download, FileText } from 'lucide-react';
-import { Progress } from "@/components/ui/progress";
 import { exportAsPDF, exportAsImage } from '../utils/exportUtils';
 import { useToast } from "@/hooks/use-toast";
 import { Character } from '../components/character/CharacterSheet';
@@ -89,6 +88,7 @@ const CharacterPreview = () => {
   // Convert stat value to percentage for Progress component
   const getStatPercentage = (value: string): number => {
     const num = parseInt(value, 10);
+    // For visualization purposes, normalize to 0-100 range
     return Math.min(Math.max(num, 0), 100);
   };
 
@@ -127,79 +127,123 @@ const CharacterPreview = () => {
           <p>Loading character data...</p>
         </div>
       ) : character ? (
-        <div id="character-sheet-preview" className="container mx-auto pb-12">
-          <Card className="bg-[#0a0a0a] text-white mb-8">
-            <CardHeader>
+        <div className="max-w-3xl mx-auto px-4 py-6">
+          <div id="character-sheet-preview" className="bg-[#0a0a0a] text-white rounded-lg overflow-hidden">
+            <div className="p-6 pb-0">
               <div className="flex justify-between items-center">
                 <div className="text-blue-400">FateEngine</div>
                 <div>Character Profile</div>
               </div>
-              <CardTitle className="mt-6 text-4xl font-bold">{character.name}</CardTitle>
-              <div className="flex gap-6 mt-2">
+              <h1 className="mt-6 text-4xl font-bold uppercase">{character.name}</h1>
+              <div className="flex gap-6 mt-2 pb-4">
                 <div><span className="text-gray-400">Race:</span> {character.race}</div>
                 <div><span className="text-gray-400">Jobs:</span> {character.jobs}</div>
                 <div><span className="text-gray-400">Role:</span> {character.role}</div>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-8">
+              <hr className="border-t border-gray-800" />
+            </div>
+            
+            <div className="p-6">
               <div className="flex gap-8">
                 {/* Character Image */}
-                <div className="w-64 h-64 bg-gray-800 flex items-center justify-center">
+                <div className="w-56 h-64 bg-gray-800 flex items-center justify-center">
                   [Character Image]
                 </div>
                 
                 {/* Stats */}
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold mb-4">STATS</h2>
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <span className="w-24">HP</span>
-                      <Progress value={getStatPercentage(character.stats.hp)} className="flex-1 h-2" />
+                  <h2 className="text-xl font-semibold uppercase mb-4">STATS</h2>
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-4">
+                      <span className="w-20">HP</span>
+                      <div className="w-full max-w-lg h-2 bg-gray-700 rounded overflow-hidden">
+                        <div
+                          className="h-full bg-blue-500"
+                          style={{ width: `${getStatPercentage(character.stats.hp)}%` }}
+                        />
+                      </div>
                       <span className="w-8 text-right">{character.stats.hp}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="w-24">MP</span>
-                      <Progress value={getStatPercentage(character.stats.mp)} className="flex-1 h-2" />
+                    <div className="flex items-center gap-4">
+                      <span className="w-20">MP</span>
+                      <div className="w-full max-w-lg h-2 bg-gray-700 rounded overflow-hidden">
+                        <div
+                          className="h-full bg-blue-500"
+                          style={{ width: `${getStatPercentage(character.stats.mp)}%` }}
+                        />
+                      </div>
                       <span className="w-8 text-right">{character.stats.mp}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="w-24">Phys Atk</span>
-                      <Progress value={getStatPercentage(character.stats.physAttack)} className="flex-1 h-2" />
+                    <div className="flex items-center gap-4">
+                      <span className="w-20">Phys Atk</span>
+                      <div className="w-full max-w-lg h-2 bg-gray-700 rounded overflow-hidden">
+                        <div
+                          className="h-full bg-blue-500"
+                          style={{ width: `${getStatPercentage(character.stats.physAttack)}%` }}
+                        />
+                      </div>
                       <span className="w-8 text-right">{character.stats.physAttack}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="w-24">Phys Def</span>
-                      <Progress value={getStatPercentage(character.stats.physDefense)} className="flex-1 h-2" />
+                    <div className="flex items-center gap-4">
+                      <span className="w-20">Phys Def</span>
+                      <div className="w-full max-w-lg h-2 bg-gray-700 rounded overflow-hidden">
+                        <div
+                          className="h-full bg-blue-500"
+                          style={{ width: `${getStatPercentage(character.stats.physDefense)}%` }}
+                        />
+                      </div>
                       <span className="w-8 text-right">{character.stats.physDefense}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="w-24">Agility</span>
-                      <Progress value={getStatPercentage(character.stats.agility)} className="flex-1 h-2" />
+                    <div className="flex items-center gap-4">
+                      <span className="w-20">Agility</span>
+                      <div className="w-full max-w-lg h-2 bg-gray-700 rounded overflow-hidden">
+                        <div
+                          className="h-full bg-blue-500"
+                          style={{ width: `${getStatPercentage(character.stats.agility)}%` }}
+                        />
+                      </div>
                       <span className="w-8 text-right">{character.stats.agility}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="w-24">Mag Atk</span>
-                      <Progress value={getStatPercentage(character.stats.magicAttack)} className="flex-1 h-2" />
+                    <div className="flex items-center gap-4">
+                      <span className="w-20">Mag Atk</span>
+                      <div className="w-full max-w-lg h-2 bg-gray-700 rounded overflow-hidden">
+                        <div
+                          className="h-full bg-blue-500"
+                          style={{ width: `${getStatPercentage(character.stats.magicAttack)}%` }}
+                        />
+                      </div>
                       <span className="w-8 text-right">{character.stats.magicAttack}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="w-24">Mag Def</span>
-                      <Progress value={getStatPercentage(character.stats.magicDefense)} className="flex-1 h-2" />
+                    <div className="flex items-center gap-4">
+                      <span className="w-20">Mag Def</span>
+                      <div className="w-full max-w-lg h-2 bg-gray-700 rounded overflow-hidden">
+                        <div
+                          className="h-full bg-blue-500"
+                          style={{ width: `${getStatPercentage(character.stats.magicDefense)}%` }}
+                        />
+                      </div>
                       <span className="w-8 text-right">{character.stats.magicDefense}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="w-24">Resist</span>
-                      <Progress value={getStatPercentage(character.stats.resist)} className="flex-1 h-2" />
+                    <div className="flex items-center gap-4">
+                      <span className="w-20">Resist</span>
+                      <div className="w-full max-w-lg h-2 bg-gray-700 rounded overflow-hidden">
+                        <div
+                          className="h-full bg-blue-500"
+                          style={{ width: `${getStatPercentage(character.stats.resist)}%` }}
+                        />
+                      </div>
                       <span className="w-8 text-right">{character.stats.resist}</span>
                     </div>
                   </div>
                 </div>
               </div>
               
+              <hr className="border-t border-gray-800 my-8" />
+              
               {/* Personality */}
-              <div>
-                <h2 className="text-xl font-bold mb-4">PERSONALITY</h2>
-                <div className="space-y-3">
+              <div className="py-6">
+                <h2 className="text-xl font-semibold uppercase mb-4">PERSONALITY</h2>
+                <div className="space-y-2">
                   <div><span className="text-gray-400">MBTI:</span> {character.personality.mbti}</div>
                   <div><span className="text-gray-400">Enneagram:</span> {character.personality.enneagram}</div>
                   <div><span className="text-gray-400">Alignment:</span> {character.personality.alignment}</div>
@@ -207,31 +251,35 @@ const CharacterPreview = () => {
                 </div>
               </div>
               
+              <hr className="border-t border-gray-800 my-8" />
+              
               {/* Biography */}
-              <div>
-                <h2 className="text-xl font-bold mb-4">BIOGRAPHY</h2>
-                <div className="space-y-3">
+              <div className="py-6">
+                <h2 className="text-xl font-semibold uppercase mb-4">BIOGRAPHY</h2>
+                <div className="space-y-4">
                   <div><span className="text-gray-400">Parents:</span> {character.parents}</div>
-                  <div className="whitespace-pre-line">{character.bio}</div>
+                  <div className="text-base leading-relaxed">{character.bio}</div>
                 </div>
               </div>
               
+              <hr className="border-t border-gray-800 my-8" />
+              
               {/* Abilities */}
-              <div>
-                <h2 className="text-xl font-bold mb-4">ABILITIES</h2>
-                <div className="space-y-3">
+              <div className="py-6">
+                <h2 className="text-xl font-semibold uppercase mb-4">ABILITIES</h2>
+                <div className="space-y-4">
                   <div><span className="text-gray-400">Main Ability:</span> {character.abilities.mainAbility}</div>
                   <div>
-                    <div className="text-gray-400 mb-1">Signature Skills:</div>
-                    <div className="whitespace-pre-line ml-4">
+                    <div className="text-gray-400">Signature Skills:</div>
+                    <div className="pl-4 text-base leading-relaxed">
                       {character.abilities.signatureSkills.split(',').map((skill, i) => (
                         <div key={i}>• {skill.trim()}</div>
                       ))}
                     </div>
                   </div>
                   <div>
-                    <div className="text-gray-400 mb-1">Passives:</div>
-                    <div className="whitespace-pre-line ml-4">
+                    <div className="text-gray-400">Passives:</div>
+                    <div className="pl-4 text-base leading-relaxed">
                       {character.abilities.passives.split(',').map((passive, i) => (
                         <div key={i}>• {passive.trim()}</div>
                       ))}
@@ -240,29 +288,43 @@ const CharacterPreview = () => {
                 </div>
               </div>
               
+              <hr className="border-t border-gray-800 my-8" />
+              
               {/* Equipment & Style */}
-              <div>
-                <h2 className="text-xl font-bold mb-4">EQUIPMENT & STYLE</h2>
-                <div className="space-y-3">
+              <div className="py-6">
+                <h2 className="text-xl font-semibold uppercase mb-4">EQUIPMENT & STYLE</h2>
+                <div className="space-y-2">
                   <div><span className="text-gray-400">Weapon:</span> {character.equipment.weapon}</div>
                   <div><span className="text-gray-400">Armor:</span> {character.equipment.armor}</div>
                   <div><span className="text-gray-400">Style:</span> {character.style}</div>
                 </div>
               </div>
               
+              <hr className="border-t border-gray-800 my-8" />
+              
               {/* Notes */}
-              <div>
-                <h2 className="text-xl font-bold mb-4">NOTES</h2>
-                <div className="whitespace-pre-line">{character.notes}</div>
+              <div className="py-6">
+                <h2 className="text-xl font-semibold uppercase mb-4">NOTES</h2>
+                <div className="pl-4 text-base leading-relaxed">
+                  {character.notes.split('\n').map((note, i) => (
+                    <div key={i}>{note}</div>
+                  ))}
+                </div>
               </div>
               
+              <hr className="border-t border-gray-800 my-8" />
+              
               {/* Relationships */}
-              <div>
-                <h2 className="text-xl font-bold mb-4">RELATIONSHIPS</h2>
-                <div className="whitespace-pre-line">{character.relationships}</div>
+              <div className="py-6">
+                <h2 className="text-xl font-semibold uppercase mb-4">RELATIONSHIPS</h2>
+                <div className="pl-4 text-base leading-relaxed">
+                  {character.relationships.split('\n').map((rel, i) => (
+                    <div key={i}>{rel}</div>
+                  ))}
+                </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       ) : (
         <div className="flex items-center justify-center h-64">
