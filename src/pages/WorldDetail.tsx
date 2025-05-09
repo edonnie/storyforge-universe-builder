@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import Layout from '../components/Layout';
@@ -8,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Plus, Edit, ArrowRight, Check, PlusCircle, Save, Trash } from 'lucide-react';
 import { fetchWorldById, updateWorld, TimelineEvent, fetchEntitiesByWorldId, EntityType } from '../utils/worldUtils';
 import { useToast } from "@/hooks/use-toast";
@@ -489,10 +489,10 @@ const WorldDetail = () => {
         </Tabs>
       </div>
       
-      {/* Timeline Section - Moved below entity tabs */}
+      {/* Timeline Section - Redesigned for compactness and better style */}
       <div className="mt-8">
         <Card className="bg-black/40 border border-gray-800">
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-row items-center justify-between py-4">
             <CardTitle className="text-xl">Timeline</CardTitle>
             <Button
               variant="ghost"
@@ -503,9 +503,9 @@ const WorldDetail = () => {
               <PlusCircle size={18} />
             </Button>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             {showNewEventForm && (
-              <div className="mb-6 p-4 border border-gray-700 bg-black/60 rounded-md space-y-4">
+              <div className="mb-4 p-3 border border-gray-700 bg-black/60 rounded-md space-y-3">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Year</label>
                   <Input
@@ -521,19 +521,21 @@ const WorldDetail = () => {
                     value={newEvent}
                     onChange={(e) => setNewEvent(e.target.value)}
                     placeholder="Describe the event"
-                    rows={3}
+                    rows={2}
                     className="bg-black/40 border-gray-700"
                   />
                 </div>
                 <div className="flex space-x-2">
                   <Button 
                     onClick={handleAddTimelineEvent}
+                    size="sm"
                     className="bg-blue-500 hover:bg-blue-600 text-white"
                   >
                     Add Event
                   </Button>
                   <Button 
                     variant="outline" 
+                    size="sm"
                     onClick={() => {
                       setShowNewEventForm(false);
                       setNewYear('');
@@ -548,7 +550,7 @@ const WorldDetail = () => {
             )}
             
             {editingEvent && (
-              <div className="mb-6 p-4 border border-gray-700 bg-black/60 rounded-md space-y-4">
+              <div className="mb-4 p-3 border border-gray-700 bg-black/60 rounded-md space-y-3">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Year</label>
                   <Input
@@ -564,19 +566,21 @@ const WorldDetail = () => {
                     value={editingEvent.description}
                     onChange={(e) => setEditingEvent({...editingEvent, description: e.target.value})}
                     placeholder="Describe the event"
-                    rows={3}
+                    rows={2}
                     className="bg-black/40 border-gray-700"
                   />
                 </div>
                 <div className="flex space-x-2">
                   <Button 
                     onClick={handleEditTimelineEvent}
+                    size="sm"
                     className="bg-blue-500 hover:bg-blue-600 text-white"
                   >
-                    <Save size={16} className="mr-2" /> Save Changes
+                    <Save size={16} className="mr-1" /> Save
                   </Button>
                   <Button 
                     variant="outline" 
+                    size="sm"
                     onClick={() => setEditingEvent(null)}
                     className="border-gray-600 hover:bg-gray-800"
                   >
@@ -587,49 +591,49 @@ const WorldDetail = () => {
             )}
             
             {timeline && timeline.length > 0 ? (
-              <div className="space-y-4">
-                <div className="relative">
-                  {timeline.sort((a, b) => parseInt(a.year) - parseInt(b.year)).map((event, index) => (
-                    <div key={event.id} className="relative pl-8 pb-8">
-                      {/* Timeline line */}
-                      {index < timeline.length - 1 && (
-                        <div className="absolute left-3 top-6 bottom-0 w-0.5 bg-blue-500/30"></div>
-                      )}
+              <ScrollArea className="h-[400px] pr-4">
+                <div className="relative border-l border-blue-500/30 ml-3 pl-6">
+                  {timeline
+                    .sort((a, b) => parseInt(a.year) - parseInt(b.year))
+                    .map((event, index) => (
+                    <div key={event.id} className="relative mb-3 group">
                       {/* Timeline dot */}
-                      <div className="absolute left-0 top-1.5 w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-xs font-bold">
+                      <div className="absolute -left-9 top-1 w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center text-xs font-bold">
                         {index + 1}
                       </div>
+                      {/* Event marker */}
+                      <div className="absolute -left-3 top-1 w-3 h-3 bg-blue-600 rounded-full border-2 border-blue-800"></div>
                       {/* Event content */}
-                      <div className="group">
-                        <h4 className="font-bold text-lg">{event.year}</h4>
-                        <p className="mt-1 text-gray-400">{event.description}</p>
-                        
-                        {/* Edit/Delete buttons */}
-                        <div className="mt-2 space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => setEditingEvent(event)}
-                            className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/20"
-                          >
-                            <Edit size={14} className="mr-1" /> Edit
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => handleDeleteTimelineEvent(event.id)}
-                            className="text-red-400 hover:text-red-300 hover:bg-red-500/20"
-                          >
-                            <Trash size={14} className="mr-1" /> Delete
-                          </Button>
+                      <div className="bg-black/30 p-2 rounded-md border border-gray-800 hover:border-blue-500/50 transition-colors">
+                        <div className="flex justify-between items-start">
+                          <h4 className="font-bold text-sm text-blue-400">{event.year}</h4>
+                          <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => setEditingEvent(event)}
+                              className="h-6 w-6 p-0 text-blue-400 hover:text-blue-300 hover:bg-blue-500/20"
+                            >
+                              <Edit size={12} />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleDeleteTimelineEvent(event.id)}
+                              className="h-6 w-6 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/20"
+                            >
+                              <Trash size={12} />
+                            </Button>
+                          </div>
                         </div>
+                        <p className="mt-1 text-sm text-gray-300">{event.description}</p>
                       </div>
                     </div>
                   ))}
                 </div>
-              </div>
+              </ScrollArea>
             ) : (
-              <p className="text-center py-8 text-gray-400">
+              <p className="text-center py-6 text-gray-400">
                 No timeline events yet. Click the + button to add one.
               </p>
             )}
