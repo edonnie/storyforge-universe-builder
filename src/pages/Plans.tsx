@@ -183,7 +183,7 @@ const Plans = () => {
               key={plan.name} 
               className={`bg-card border ${
                 plan.isCurrentPlan ? 'border-primary' : ''
-              } relative overflow-hidden`}
+              } relative overflow-hidden flex flex-col`}
             >
               {plan.popular && (
                 <div className="absolute top-0 right-0 bg-primary text-primary-foreground px-3 py-1 text-xs font-semibold">
@@ -206,7 +206,7 @@ const Plans = () => {
                 </div>
               </CardHeader>
               
-              <CardContent>
+              <CardContent className="flex-grow">
                 <ul className="space-y-3">
                   {plan.features.map((feature, index) => (
                     <li key={index} className="flex items-start">
@@ -217,7 +217,7 @@ const Plans = () => {
                 </ul>
               </CardContent>
               
-              <CardFooter>
+              <CardFooter className="pt-6 mt-auto">
                 <Button
                   className="w-full"
                   variant={plan.buttonVariant as any}

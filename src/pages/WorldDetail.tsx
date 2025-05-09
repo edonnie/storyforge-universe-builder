@@ -11,6 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Plus, Edit, ArrowRight, Check, PlusCircle, Save, Trash } from 'lucide-react';
 import { fetchWorldById, updateWorld, TimelineEvent, fetchEntitiesByWorldId, EntityType } from '../utils/worldUtils';
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from 'react-router-dom';
 
 const WorldDetail = () => {
   const { worldId } = useParams<{ worldId: string }>();
@@ -32,6 +33,7 @@ const WorldDetail = () => {
     items: []
   });
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   useEffect(() => {
     const loadWorld = async () => {
@@ -188,6 +190,12 @@ const WorldDetail = () => {
         variant: "destructive",
       });
     }
+  };
+  
+  // New function to handle navigation to character creation page
+  const handleCreateCharacter = () => {
+    // Navigate to character creation page with the current worldId
+    navigate(`/worlds/${worldId}/characters/create`);
   };
   
   if (loading) {
@@ -398,7 +406,7 @@ const WorldDetail = () => {
               <h2 className="text-xl font-semibold">Your Characters</h2>
               <Button 
                 size="sm" 
-                onClick={() => window.location.href = `/worlds/${worldId}/characters/create`}
+                onClick={handleCreateCharacter}
                 className="bg-blue-500 hover:bg-blue-600 text-white"
               >
                 <Plus size={16} className="mr-2" /> Create Character

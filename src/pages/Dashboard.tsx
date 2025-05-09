@@ -82,11 +82,7 @@ const Dashboard = () => {
           
           // Set worlds
           if (content.fateWorlds) {
-            setWorlds(content.fateWorlds.map((world: any) => ({
-              id: world.id,
-              name: world.name,
-              createdAt: new Date().toISOString() // Backend doesn't yet provide this
-            })));
+            setWorlds(content.fateWorlds);
           }
           
           // Set total entities
@@ -122,27 +118,48 @@ const Dashboard = () => {
       return;
     }
     
-    // Generate a unique ID for the new world
-    const newWorldId = `world_${Date.now()}`;
-    
-    // Add to local state first for immediate feedback
-    const newWorld = {
-      id: newWorldId,
-      name,
-      createdAt: new Date().toISOString(),
-    };
-    
-    setWorlds([...worlds, newWorld]);
-    
-    // TODO: When backend implements create world endpoint, add API call here
-    
-    toast({
-      title: "World created",
-      description: `${name} has been created successfully.`
-    });
+    try {
+      // Add to local state first for immediate feedback
+      const newWorld = {
+        id: `world_${Date.now()}`,
+        name,
+        createdAt: new Date().toISOString(),
+      };
+      
+      setWorlds([...worlds, newWorld]);
+      
+      // Save the world to backend
+      const response = await fetch(`${API_BASE_URL}/worlds`, {
+        method: 'POST',
+        headers: {
+          'Authorization': token,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}`);
+      }
+      
+      // Get the newly created world from the response
+      const data = await response.json();
+      
+      toast({
+        title: "World created",
+        description: `${name} has been created successfully.`
+      });
+    } catch (error) {
+      console.error('Error creating world:', error);
+      toast({
+        title: "Error creating world",
+        description: "Failed to save your world. Please try again later.",
+        variant: "destructive"
+      });
+    }
   };
   
-  // Handle upgrade/billing management
+  // Handle subscription management
   const handleSubscription = async () => {
     const token = localStorage.getItem('fateToken');
     
@@ -156,6 +173,7 @@ const Dashboard = () => {
     }
     
     try {
+      setIsLoading(true);
       if (subscriptionPlan === 'pro') {
         // Open billing portal for existing subscribers
         const response = await fetch(`${API_BASE_URL}/billing-portal`, {
@@ -206,6 +224,8 @@ const Dashboard = () => {
         description: "Unable to process your request. Please try again later.",
         variant: "destructive"
       });
+    } finally {
+      setIsLoading(false);
     }
   };
   

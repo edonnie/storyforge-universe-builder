@@ -1,97 +1,38 @@
 
-import EditableField from '../EditableField';
+import { Progress } from '@/components/ui/progress';
 
-interface StatBlockProps {
-  stats: {
-    hp: string;
-    mp: string;
-    physAttack: string;
-    physDefense: string;
-    agility: string;
-    magicAttack: string;
-    magicDefense: string;
-    resist: string;
-  };
-  onSaveField: (field: string, value: string) => Promise<void>;
+interface CharacterStat {
+  name: string;
+  value: number;
+  max?: number;
 }
 
-const CharacterStatBlock = ({ stats, onSaveField }: StatBlockProps) => {
+interface CharacterStatBlockProps {
+  stats: CharacterStat[];
+}
+
+const CharacterStatBlock = ({ stats }: CharacterStatBlockProps) => {
+  const maxPossibleValue = 100; // We'll use this as the max for the progress bars
+
   return (
-    <div className="space-y-2">
-      <h2 className="text-2xl font-bold">Stats</h2>
-      <div className="grid grid-cols-2 gap-2">
-        <div className="space-y-1">
-          <label className="text-lg font-medium whitespace-nowrap">HP</label>
-          <EditableField
-            initialValue={stats.hp}
-            onSave={(value) => onSaveField('stats.hp', value)}
-            placeholder="Hit Points"
-            className="p-2 rounded hover:bg-muted/50 border border-border/50"
-          />
-        </div>
-        <div className="space-y-1">
-          <label className="text-lg font-medium whitespace-nowrap">MP</label>
-          <EditableField
-            initialValue={stats.mp}
-            onSave={(value) => onSaveField('stats.mp', value)}
-            placeholder="Magic Points"
-            className="p-2 rounded hover:bg-muted/50 border border-border/50"
-          />
-        </div>
-        <div className="space-y-1">
-          <label className="text-lg font-medium whitespace-nowrap">Phys Attack</label>
-          <EditableField
-            initialValue={stats.physAttack}
-            onSave={(value) => onSaveField('stats.physAttack', value)}
-            placeholder="Physical Attack"
-            className="p-2 rounded hover:bg-muted/50 border border-border/50"
-          />
-        </div>
-        <div className="space-y-1">
-          <label className="text-lg font-medium whitespace-nowrap">Phys Defense</label>
-          <EditableField
-            initialValue={stats.physDefense}
-            onSave={(value) => onSaveField('stats.physDefense', value)}
-            placeholder="Physical Defense"
-            className="p-2 rounded hover:bg-muted/50 border border-border/50"
-          />
-        </div>
-        <div className="space-y-1">
-          <label className="text-lg font-medium whitespace-nowrap">Agility</label>
-          <EditableField
-            initialValue={stats.agility}
-            onSave={(value) => onSaveField('stats.agility', value)}
-            placeholder="Agility"
-            className="p-2 rounded hover:bg-muted/50 border border-border/50"
-          />
-        </div>
-        <div className="space-y-1">
-          <label className="text-lg font-medium whitespace-nowrap">Magic Attack</label>
-          <EditableField
-            initialValue={stats.magicAttack}
-            onSave={(value) => onSaveField('stats.magicAttack', value)}
-            placeholder="Magic Attack"
-            className="p-2 rounded hover:bg-muted/50 border border-border/50"
-          />
-        </div>
-        <div className="space-y-1">
-          <label className="text-lg font-medium whitespace-nowrap">Magic Defense</label>
-          <EditableField
-            initialValue={stats.magicDefense}
-            onSave={(value) => onSaveField('stats.magicDefense', value)}
-            placeholder="Magic Defense"
-            className="p-2 rounded hover:bg-muted/50 border border-border/50"
-          />
-        </div>
-        <div className="space-y-1">
-          <label className="text-lg font-medium whitespace-nowrap">Resist</label>
-          <EditableField
-            initialValue={stats.resist}
-            onSave={(value) => onSaveField('stats.resist', value)}
-            placeholder="Resistance"
-            className="p-2 rounded hover:bg-muted/50 border border-border/50"
-          />
-        </div>
+    <div className="space-y-5">
+      <h3 className="text-xl font-bold">STATS</h3>
+      <div className="space-y-4">
+        {stats.map((stat, index) => {
+          const statValue = typeof stat.value === 'number' ? stat.value : 0;
+          const maxValue = stat.max || maxPossibleValue;
+          const progressPercentage = Math.min(100, (statValue / maxValue) * 100);
+          
+          return (
+            <div key={index} className="flex items-center justify-between gap-4">
+              <div className="w-20 flex-shrink-0 font-medium">{stat.name}</div>
+              <div className="flex-grow">
+                <Progress className="h-2.5" value={progressPercentage} />
+              </div>
+              <div className="w-8 text-right">{statValue}</div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
