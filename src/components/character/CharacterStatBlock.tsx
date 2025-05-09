@@ -43,10 +43,15 @@ const CharacterStatBlock = ({ stats, onSaveField }: CharacterStatBlockProps) => 
       <h3 className="text-xl font-bold">STATS</h3>
       <div className="space-y-4">
         {statsArray.map((stat, index) => {
+          // Ensure statValue is a number
           const statValue = typeof stat.value === 'number' ? stat.value : 0;
+          
           // Use the max property if it exists, otherwise use the maxPossibleValue
-          const maxValue = 'max' in stat && stat.max !== undefined ? stat.max : maxPossibleValue;
-          const progressPercentage = Math.min(100, (statValue / maxValue) * 100);
+          // Ensure the max value is explicitly converted to a number
+          const maxValue = 'max' in stat && typeof stat.max === 'number' ? stat.max : maxPossibleValue;
+          
+          // Calculate percentage, ensuring both operands are numbers
+          const progressPercentage = Math.min(100, Math.round((statValue / maxValue) * 100));
           
           return (
             <div key={index} className="flex items-center justify-between gap-4">
