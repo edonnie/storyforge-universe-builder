@@ -16,7 +16,7 @@ const CharacterCreation = () => {
     }
   ]);
   const { toast } = useToast();
-  const { character, handleSaveField, handleSaveCharacter } = useCharacter(worldId);
+  const { character, handleSaveField, handleSaveCharacter, setCharacter } = useCharacter(worldId);
   
   return (
     <Layout>
@@ -29,6 +29,8 @@ const CharacterCreation = () => {
             chatMessages={chatMessages} 
             setChatMessages={setChatMessages}
             onSaveCharacter={handleSaveCharacter}
+            character={character}
+            setCharacter={setCharacter}
           />
           
           {/* Right Column - Character Details - Scrollable */}
