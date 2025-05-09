@@ -1,24 +1,47 @@
 
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { useParams } from 'react-router-dom';
+import Layout from '../components/Layout';
+import { useToast } from "@/hooks/use-toast";
+import { useCharacter } from '../hooks/useCharacter';
+import ChatSection, { ChatMessage } from '../components/character/ChatSection';
+import CharacterSheet from '../components/character/CharacterSheet';
 
-const Index = () => {
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    // Check if user is logged in (has a token)
-    const token = localStorage.getItem('fateToken');
-    
-    if (token) {
-      // If logged in, redirect to dashboard
-      navigate('/dashboard', { replace: true });
-    } else {
-      // If not logged in, redirect to landing page
-      navigate('/', { replace: true });
+const CharacterCreation = () => {
+  const { worldId } = useParams<{ worldId: string }>();
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
+    { 
+      role: "assistant", 
+      content: 'Hello! I can help you create a character. What kind of character would you like to create?' 
     }
-  }, [navigate]);
-
-  return null;
+  ]);
+  const { toast } = useToast();
+  const { character, handleSaveField, handleSaveCharacter, setCharacter } = useCharacter(worldId);
+  
+  return (
+    <Layout>
+      {/* Main content with fixed height */}
+      <div className="fixed inset-0 pt-16 pb-0"> {/* pt-16 accounts for the header height */}
+        <div className="flex h-full">
+          {/* Left Column - Chat Area */}
+          <ChatSection 
+            worldId={worldId || ''} 
+            chatMessages={chatMessages} 
+            setChatMessages={setChatMessages}
+            onSaveCharacter={handleSaveCharacter}
+            character={character}
+            setCharacter={setCharacter}
+          />
+          
+          {/* Right Column - Character Details - Scrollable */}
+          <CharacterSheet 
+            character={character}
+            onSaveField={handleSaveField}
+          />
+        </div>
+      </div>
+    </Layout>
+  );
 };
 
-export default Index;
+export default CharacterCreation;
