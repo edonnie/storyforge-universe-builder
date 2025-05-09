@@ -7,7 +7,7 @@ import CreateWorldModal from '../components/CreateWorldModal';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Download, FileText, Users } from 'lucide-react';
+import { Plus, Search, Download, FileText, Users, LayoutGrid } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { fetchWorlds } from "@/utils/worldUtils";
 
@@ -225,8 +225,11 @@ const Dashboard = () => {
         {/* Left Column - Worlds */}
         <div className="w-full md:w-2/3 space-y-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">My Worlds</h1>
-            <Button onClick={() => setIsCreateModalOpen(true)}>
+            <div className="space-y-1">
+              <h1 className="text-3xl font-bold tracking-tight">My Worlds</h1>
+              <p className="text-muted-foreground">Create and manage your worldbuilding projects</p>
+            </div>
+            <Button onClick={() => setIsCreateModalOpen(true)} className="bg-primary hover:bg-primary/90">
               <Plus size={16} className="mr-2" /> New World
             </Button>
           </div>
@@ -235,15 +238,18 @@ const Dashboard = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
             <Input
               placeholder="Search worlds..."
-              className="pl-10"
+              className="pl-10 bg-card border-border"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           
           {isLoading ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">Loading your worlds...</p>
+            <div className="flex items-center justify-center py-16 bg-card/50 rounded-lg border border-border/50 animate-pulse">
+              <div className="space-y-3 text-center">
+                <LayoutGrid size={32} className="mx-auto text-primary/50" />
+                <p className="text-muted-foreground">Loading your worlds...</p>
+              </div>
             </div>
           ) : filteredWorlds.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -257,13 +263,17 @@ const Dashboard = () => {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 bg-card rounded-lg">
+            <div className="flex flex-col items-center justify-center py-16 bg-card/50 rounded-lg border border-border/50">
               {searchTerm ? (
-                <p className="text-muted-foreground">No worlds found matching "{searchTerm}"</p>
+                <div className="space-y-3 text-center">
+                  <Search size={32} className="mx-auto text-muted-foreground/50" />
+                  <p className="text-muted-foreground">No worlds found matching "<span className="font-medium">{searchTerm}</span>"</p>
+                </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-4 text-center">
+                  <LayoutGrid size={32} className="mx-auto text-muted-foreground/50" />
                   <p className="text-muted-foreground">You haven't created any worlds yet</p>
-                  <Button onClick={() => setIsCreateModalOpen(true)}>
+                  <Button onClick={() => setIsCreateModalOpen(true)} variant="outline" className="border-primary/30 hover:border-primary hover:bg-primary/10">
                     <Plus size={16} className="mr-2" /> Create Your First World
                   </Button>
                 </div>
@@ -274,25 +284,48 @@ const Dashboard = () => {
         
         {/* Right Column - Stats & Actions */}
         <div className="w-full md:w-1/3 space-y-6">
-          <Card className="bg-card">
+          <Card className="bg-card/50 border border-border/50 overflow-hidden">
+            <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent h-2" />
             <CardContent className="p-6">
               <h2 className="text-xl font-semibold mb-4">Usage Stats</h2>
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Worlds</span>
-                  <span className="font-medium">{worlds.length}</span>
+                  <span className="text-muted-foreground flex items-center">
+                    <LayoutGrid size={16} className="mr-2" /> Worlds
+                  </span>
+                  <span className="font-medium bg-primary/10 text-primary px-2.5 py-0.5 rounded-full">
+                    {worlds.length}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Total Entities</span>
-                  <span className="font-medium">{totalEntities}</span>
+                  <span className="text-muted-foreground flex items-center">
+                    <Users size={16} className="mr-2" /> Total Entities
+                  </span>
+                  <span className="font-medium bg-primary/10 text-primary px-2.5 py-0.5 rounded-full">
+                    {totalEntities}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Subscription</span>
-                  <span className="font-medium capitalize">{subscriptionPlan}</span>
+                  <span className={`font-medium capitalize px-2.5 py-0.5 rounded-full ${
+                    subscriptionPlan === 'pro' 
+                      ? 'bg-gradient-to-r from-[#00bbcc]/20 to-[#007788]/20 text-[#00bbcc]' 
+                      : 'bg-muted/50 text-muted-foreground'
+                  }`}>
+                    {subscriptionPlan}
+                  </span>
                 </div>
                 
                 <div className="pt-4">
-                  <Button className="w-full" variant="outline" onClick={handleSubscription}>
+                  <Button 
+                    className={`w-full ${
+                      subscriptionPlan === 'pro' 
+                        ? 'border-[#00bbcc]/30 text-[#00bbcc] hover:border-[#00bbcc]/80 hover:bg-[#00bbcc]/10' 
+                        : 'bg-gradient-to-r from-[#00bbcc] to-[#007788] hover:opacity-90 text-white border-none'
+                    }`} 
+                    variant={subscriptionPlan === 'pro' ? 'outline' : 'default'} 
+                    onClick={handleSubscription}
+                  >
                     {subscriptionPlan === 'pro' ? 'Manage Billing' : 'Upgrade to Pro'}
                   </Button>
                 </div>
@@ -300,31 +333,33 @@ const Dashboard = () => {
             </CardContent>
           </Card>
           
-          <Card className="bg-card">
+          <Card className="bg-card/50 border border-border/50 overflow-hidden">
+            <div className="bg-gradient-to-r from-secondary/10 via-secondary/5 to-transparent h-2" />
             <CardContent className="p-6">
               <h2 className="text-xl font-semibold mb-4">Export Options</h2>
               <div className="space-y-3">
-                <Button variant="outline" className="w-full justify-start">
+                <Button variant="outline" className="w-full justify-start hover:bg-secondary/10 hover:border-secondary/50">
                   <FileText size={16} className="mr-2" /> Export as PDF
                 </Button>
-                <Button variant="outline" className="w-full justify-start">
+                <Button variant="outline" className="w-full justify-start hover:bg-secondary/10 hover:border-secondary/50">
                   <Download size={16} className="mr-2" /> Export as Image
                 </Button>
               </div>
             </CardContent>
           </Card>
           
-          <Card className="bg-card">
+          <Card className="bg-card/50 border border-border/50 overflow-hidden">
+            <div className="bg-gradient-to-r from-accent/10 via-accent/5 to-transparent h-2" />
             <CardContent className="p-6">
               <h2 className="text-xl font-semibold mb-4">Featured Templates</h2>
               <p className="text-muted-foreground text-sm mb-4">
                 Start with a pre-built world template
               </p>
               <div className="space-y-3">
-                <Button variant="outline" className="w-full justify-start">
+                <Button variant="outline" className="w-full justify-start hover:bg-accent/10 hover:border-accent/50">
                   <Users size={16} className="mr-2" /> Fantasy Kingdom
                 </Button>
-                <Button variant="outline" className="w-full justify-start">
+                <Button variant="outline" className="w-full justify-start hover:bg-accent/10 hover:border-accent/50">
                   <Users size={16} className="mr-2" /> Sci-Fi Colony
                 </Button>
               </div>
