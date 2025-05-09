@@ -15,7 +15,11 @@ export const parseStructuredOutput = (text: string, character: Character): Chara
   const sections: Record<string, string> = {};
   
   // Define the section headers we're looking for
-  const sectionHeaders = ["NAME:", "RACE:", "STATS:", "PERSONALITY:", "ABILITIES:", "BIOGRAPHY:", "EQUIPMENT:", "STYLE:", "NOTES:", "RELATIONSHIPS:"];
+  const sectionHeaders = [
+    "NAME:", "RACE:", "JOBS:", "ROLE:", "PARENTS:", 
+    "PERSONALITY:", "BIO:", "BIOGRAPHY:", "EQUIPMENT:", 
+    "STYLE:", "STATS:", "ABILITIES:", "NOTES:", "RELATIONSHIPS:"
+  ];
 
   // Find the start index of each section
   const sectionIndices: Record<string, number> = {};
@@ -44,6 +48,18 @@ export const parseStructuredOutput = (text: string, character: Character): Chara
   if (sections["RACE:"]) {
     updatedCharacter.race = sections["RACE:"];
   }
+  
+  if (sections["JOBS:"]) {
+    updatedCharacter.jobs = sections["JOBS:"];
+  }
+  
+  if (sections["ROLE:"]) {
+    updatedCharacter.role = sections["ROLE:"];
+  }
+  
+  if (sections["PARENTS:"]) {
+    updatedCharacter.parents = sections["PARENTS:"];
+  }
 
   if (sections["STATS:"]) {
     const statsText = sections["STATS:"];
@@ -69,6 +85,7 @@ export const parseStructuredOutput = (text: string, character: Character): Chara
 
   if (sections["PERSONALITY:"]) {
     const personalityText = sections["PERSONALITY:"];
+    
     // Extract personality traits
     const mbtiMatch = personalityText.match(/MBTI:?\s*([A-Z]{4})/i);
     const enneagramMatch = personalityText.match(/ENNEAGRAM:?\s*([\dw]+)/i);
@@ -79,8 +96,18 @@ export const parseStructuredOutput = (text: string, character: Character): Chara
     if (alignmentMatch) updatedCharacter.personality.alignment = alignmentMatch[1];
     
     // For traits, try to extract everything after "TRAITS:" if it exists
-    const traitsMatch = personalityText.match(/TRAITS:?\s*([^]*)$/i);
-    if (traitsMatch) updatedCharacter.personality.traits = traitsMatch[1].trim();
+    // But stop at the next section header if present
+    const traitsRegex = /TRAITS:?\s*([\s\S]*?)(?=\s*(?:BIO(?:GRAPHY)?:|EQUIPMENT:|STYLE:|STATS:|ABILITIES:|NOTES:|RELATIONSHIPS:)|$)/i;
+    const traitsMatch = personalityText.match(traitsRegex);
+    
+    if (traitsMatch) {
+      updatedCharacter.personality.traits = traitsMatch[1].trim();
+    }
+  }
+
+  // Handle both BIO and BIOGRAPHY
+  if (sections["BIOGRAPHY:"] || sections["BIO:"]) {
+    updatedCharacter.bio = (sections["BIOGRAPHY:"] || sections["BIO:"]).trim();
   }
 
   if (sections["ABILITIES:"]) {
@@ -91,16 +118,12 @@ export const parseStructuredOutput = (text: string, character: Character): Chara
     if (mainAbilityMatch) updatedCharacter.abilities.mainAbility = mainAbilityMatch[1].trim();
     
     // Extract signature skills
-    const skillsMatch = abilitiesText.match(/(?:SIGNATURE[\s_-]*SKILLS|SKILLS):?\s*([^]*)(?:PASSIVE|$)/i);
+    const skillsMatch = abilitiesText.match(/(?:SIGNATURE[\s_-]*SKILLS|SKILLS):?\s*([\s\S]*?)(?=\s*(?:PASSIVE|$))/i);
     if (skillsMatch) updatedCharacter.abilities.signatureSkills = skillsMatch[1].trim();
     
     // Extract passives
-    const passivesMatch = abilitiesText.match(/(?:PASSIVE[\s_-]*(?:ABILITIES|SKILLS)|PASSIVES):?\s*([^]*)$/i);
+    const passivesMatch = abilitiesText.match(/(?:PASSIVE[\s_-]*(?:ABILITIES|SKILLS)|PASSIVES):?\s*([\s\S]*?)$/i);
     if (passivesMatch) updatedCharacter.abilities.passives = passivesMatch[1].trim();
-  }
-
-  if (sections["BIOGRAPHY:"] || sections["BIO:"]) {
-    updatedCharacter.bio = (sections["BIOGRAPHY:"] || sections["BIO:"]).trim();
   }
 
   if (sections["EQUIPMENT:"]) {

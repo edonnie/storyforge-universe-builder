@@ -101,7 +101,7 @@ const ChatSection = ({
       const data = await response.json();
       const aiMessage = { role: "assistant" as const, content: data.response };
       
-      // Add assistant message to chat
+      // Add assistant message to chat - always show the complete response
       setChatMessages([...newMessages, aiMessage]);
       
       // Parse structured output and update character
