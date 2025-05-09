@@ -44,7 +44,8 @@ const CharacterStatBlock = ({ stats, onSaveField }: CharacterStatBlockProps) => 
       <div className="space-y-4">
         {statsArray.map((stat, index) => {
           const statValue = typeof stat.value === 'number' ? stat.value : 0;
-          const maxValue = stat.max || maxPossibleValue;
+          // Use the max property if it exists, otherwise use the maxPossibleValue
+          const maxValue = 'max' in stat && stat.max !== undefined ? stat.max : maxPossibleValue;
           const progressPercentage = Math.min(100, (statValue / maxValue) * 100);
           
           return (
