@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -10,8 +9,8 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Temporary state, will be replaced with Supabase auth
-  const [subscriptionPlan, setSubscriptionPlan] = useState<'free' | 'pro'>('free'); // Mock subscription plan
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [subscriptionPlan, setSubscriptionPlan] = useState<'free' | 'pro'>('free');
   const navigate = useNavigate();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
@@ -26,7 +25,7 @@ const Header = () => {
     setIsAuthModalOpen(true);
   };
 
-  // Temporary login function, will be replaced with Supabase auth
+  // Login function
   const handleLogin = () => {
     setIsLoggedIn(true);
     setIsAuthModalOpen(false);
@@ -35,17 +34,16 @@ const Header = () => {
     localStorage.setItem('fateengine_session', 'true');
     localStorage.setItem('fateToken', 'mock_token_' + Date.now());
     
-    // Mock fetching user subscription from Supabase
-    setTimeout(() => {
-      // Mock data - in real app, this would come from Supabase
-      setSubscriptionPlan('pro');
-    }, 500);
+    // Check if user has a pro subscription
+    // This would be replaced with actual API call to check subscription
+    const isPro = localStorage.getItem('fateengine_pro') === 'true';
+    setSubscriptionPlan(isPro ? 'pro' : 'free');
     
     // Redirect to dashboard after successful login
     navigate('/dashboard');
   };
 
-  // Temporary logout function, will be replaced with Supabase auth
+  // Logout function
   const handleLogout = () => {
     setIsLoggedIn(false);
     setSubscriptionPlan('free');
@@ -53,19 +51,18 @@ const Header = () => {
     localStorage.removeItem('fateToken');
   };
   
-  // Check session on component mount (would use Supabase in real implementation)
+  // Check session on component mount
   useEffect(() => {
-    // Mock Supabase session check - would be replaced with actual Supabase authentication
     const checkSession = async () => {
       // Simulate session check delay
       await new Promise(resolve => setTimeout(resolve, 300));
       
-      // Mock session data - in real app, this would be Supabase auth state
       const hasSession = localStorage.getItem('fateengine_session');
+      const isPro = localStorage.getItem('fateengine_pro') === 'true';
       
       if (hasSession === 'true') {
         setIsLoggedIn(true);
-        setSubscriptionPlan('pro'); // Mock subscription data
+        setSubscriptionPlan(isPro ? 'pro' : 'free');
       }
     };
     

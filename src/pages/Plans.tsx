@@ -1,12 +1,21 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check } from 'lucide-react';
+import { useToast } from "@/hooks/use-toast";
 
 const Plans = () => {
   const [isAnnual, setIsAnnual] = useState(false);
+  const [currentPlan, setCurrentPlan] = useState<'free' | 'pro'>('free');
+  const { toast } = useToast();
+  
+  // Check user's current plan on component mount
+  useEffect(() => {
+    const isPro = localStorage.getItem('fateengine_pro') === 'true';
+    setCurrentPlan(isPro ? 'pro' : 'free');
+  }, []);
   
   // Plans data
   const plans = [
@@ -21,9 +30,9 @@ const Plans = () => {
         'Basic Character Creation',
         'Export as PDF',
       ],
-      buttonText: 'Current Plan',
+      buttonText: currentPlan === 'free' ? 'Current Plan' : 'Downgrade to Free',
       buttonVariant: 'outline',
-      isCurrentPlan: true,
+      isCurrentPlan: currentPlan === 'free',
     },
     {
       name: 'Pro',
@@ -39,17 +48,47 @@ const Plans = () => {
         'Custom Maps (Coming Soon)',
         'Priority Support',
       ],
-      buttonText: 'Upgrade to Pro',
+      buttonText: currentPlan === 'pro' ? 'Current Plan' : 'Upgrade to Pro',
       buttonVariant: 'default',
-      isCurrentPlan: false,
+      isCurrentPlan: currentPlan === 'pro',
       popular: true,
     }
   ];
   
   const handlePlanSelect = (planName: string) => {
-    // This will be integrated with Stripe checkout in the future
+    // Check if user is logged in
+    const hasSession = localStorage.getItem('fateengine_session') === 'true';
+    
+    if (!hasSession) {
+      toast({
+        title: "Login required",
+        description: "Please log in to change your subscription plan",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (planName === currentPlan) {
+      // Already on this plan
+      return;
+    }
+    
     if (planName === 'Pro') {
-      alert('This will redirect to Stripe checkout in the full implementation');
+      // This would connect to a payment processor in a real app
+      localStorage.setItem('fateengine_pro', 'true');
+      setCurrentPlan('pro');
+      toast({
+        title: "Subscription updated",
+        description: "You are now a Pro subscriber!",
+      });
+    } else {
+      // Downgrade to free
+      localStorage.setItem('fateengine_pro', 'false');
+      setCurrentPlan('free');
+      toast({
+        title: "Subscription updated",
+        description: "You have downgraded to the free plan",
+      });
     }
   };
   
