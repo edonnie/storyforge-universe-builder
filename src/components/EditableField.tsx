@@ -1,111 +1,82 @@
 
-import { useState, useEffect, useRef } from 'react';
-import { useToast } from "@/hooks/use-toast";
+import React, { useState } from 'react';
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 
 interface EditableFieldProps {
   initialValue: string;
-  onSave: (value: string) => Promise<void>;
-  className?: string;
+  onSave: (value: string) => Promise<void> | void;
   placeholder?: string;
   multiline?: boolean;
+  className?: string;
 }
 
-const EditableField = ({ 
-  initialValue, 
-  onSave, 
-  className = '', 
-  placeholder = 'Click to edit', 
-  multiline = false 
-}: EditableFieldProps) => {
-  const [value, setValue] = useState(initialValue);
+const EditableField: React.FC<EditableFieldProps> = ({
+  initialValue,
+  onSave,
+  placeholder = '',
+  multiline = false,
+  className = '',
+}) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [value, setValue] = useState(initialValue);
   const [isSaving, setIsSaving] = useState(false);
-  const inputRef = useRef<HTMLDivElement>(null);
-  const { toast } = useToast();
 
-  useEffect(() => {
-    setValue(initialValue);
-  }, [initialValue]);
-  
-  useEffect(() => {
-    if (isEditing && inputRef.current) {
-      inputRef.current.focus();
-      
-      // Place cursor at the end
-      const selection = window.getSelection();
-      const range = document.createRange();
-      
-      if (selection && inputRef.current.childNodes[0]) {
-        range.selectNodeContents(inputRef.current);
-        range.collapse(false);
-        selection.removeAllRanges();
-        selection.addRange(range);
-      }
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await onSave(value);
+    } catch (error) {
+      console.error("Error saving field:", error);
+    } finally {
+      setIsSaving(false);
+      setIsEditing(false);
     }
-  }, [isEditing]);
-  
-  const handleBlur = async () => {
-    if (inputRef.current) {
-      const newValue = inputRef.current.innerText;
-      
-      // Only save if value has changed
-      if (newValue !== initialValue) {
-        setIsSaving(true);
-        try {
-          await onSave(newValue);
-          setValue(newValue);
-          toast({
-            description: "Saved successfully",
-            duration: 2000,
-          });
-        } catch (error) {
-          console.error('Failed to save:', error);
-          toast({
-            title: "Error saving",
-            description: "Your changes couldn't be saved",
-            variant: "destructive",
-          });
-          // Restore original value
-          setValue(initialValue);
-        } finally {
-          setIsSaving(false);
-        }
-      }
-    }
-    setIsEditing(false);
   };
-  
+
+  // Handle key events (Enter to save, Escape to cancel)
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      setValue(initialValue);
+      setIsEditing(false);
+    } else if (e.key === 'Enter' && !multiline) {
+      handleSave();
+    }
+  };
+
+  if (isEditing) {
+    return multiline ? (
+      <Textarea
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={handleSave}
+        onKeyDown={handleKeyDown}
+        placeholder={placeholder}
+        className={`w-full min-h-[100px] ${className}`}
+        disabled={isSaving}
+        autoFocus
+      />
+    ) : (
+      <Input
+        type="text"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={handleSave}
+        onKeyDown={handleKeyDown}
+        placeholder={placeholder}
+        className={className}
+        disabled={isSaving}
+        autoFocus
+      />
+    );
+  }
+
   return (
-    <div 
-      className={`relative group ${className}`}
-      onClick={() => !isEditing && setIsEditing(true)}
+    <div
+      className={`cursor-text min-h-[2em] ${className} ${!value && 'text-muted-foreground'}`}
+      onClick={() => setIsEditing(true)}
     >
-      <div
-        ref={inputRef}
-        contentEditable={isEditing}
-        onBlur={handleBlur}
-        className={`
-          outline-none border border-transparent transition-all
-          ${isEditing ? 'border border-primary/50 rounded p-1' : ''}
-          ${value ? '' : 'text-muted-foreground italic'}
-          ${multiline ? 'min-h-[100px]' : 'whitespace-nowrap overflow-hidden text-ellipsis'}
-        `}
-        suppressContentEditableWarning={true}
-      >
-        {value || placeholder}
-      </div>
-      
-      {isSaving && (
-        <div className="absolute right-2 top-2 text-xs text-muted-foreground">
-          Saving...
-        </div>
-      )}
-      
-      {!isEditing && !isSaving && (
-        <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity text-xs text-muted-foreground">
-          Click to edit
-        </div>
-      )}
+      {value || placeholder}
     </div>
   );
 };

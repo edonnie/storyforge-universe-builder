@@ -74,8 +74,8 @@ const CharacterSheet = ({ character, onSaveField }: CharacterSheetProps) => {
   const handlePreviewExport = () => {
     // Ensure the character has an ID
     if (!character || !character.id) {
-      console.error("Cannot navigate to preview: character ID is missing");
-      return;
+      // Generate an ID if missing
+      character.id = `char_${Math.random().toString(36).substr(2, 9)}`;
     }
     
     // Extract worldId from URL or use a default
@@ -84,6 +84,9 @@ const CharacterSheet = ({ character, onSaveField }: CharacterSheetProps) => {
     const worldId = worldIdIndex > 0 && worldIdIndex < pathParts.length 
       ? pathParts[worldIdIndex] 
       : '1'; // Default to '1' if not found
+    
+    // Save current character to localStorage for preview access
+    localStorage.setItem('previewCharacter', JSON.stringify(character));
     
     // Navigate to the preview page with proper URL construction
     navigate(`/worlds/${worldId}/characters/${character.id}`);

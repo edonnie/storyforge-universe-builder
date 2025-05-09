@@ -7,6 +7,7 @@ import { ArrowLeft, Plus, Send } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { parseStructuredOutput, detectOutputType } from "../../utils/parseUtils";
 import { Character } from "../character/CharacterSheet";
+import TypingIndicator from './TypingIndicator';
 
 // Define the API base URL
 const API_BASE_URL = "https://fateengine-server.onrender.com";
@@ -38,15 +39,16 @@ const ChatSection = ({
 }: ChatSectionProps) => {
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   
-  // Scroll to the bottom when messages change
+  // Scroll to the bottom when messages change or typing state changes
   useEffect(() => {
     if (scrollAreaRef.current) {
       const scrollArea = scrollAreaRef.current;
       scrollArea.scrollTop = scrollArea.scrollHeight;
     }
-  }, [chatMessages]);
+  }, [chatMessages, isTyping]);
   
   const handleMessageSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,15 +64,11 @@ const ChatSection = ({
     // Clear input
     setInputMessage('');
     setIsLoading(true);
+    setIsTyping(true);
     
     try {
       // Get the token
       const token = localStorage.getItem('fateToken');
-      
-      // Show typing indicator (defined in index.html)
-      if (window.showTypingIndicator) {
-        window.showTypingIndicator();
-      }
       
       // Call the generate API
       const response = await fetch(`${API_BASE_URL}/generate`, {
@@ -81,11 +79,6 @@ const ChatSection = ({
         },
         body: JSON.stringify({ prompt: newMessages })
       });
-      
-      // Hide typing indicator
-      if (window.removeTypingIndicator) {
-        window.removeTypingIndicator();
-      }
       
       if (!response.ok) {
         // Handle error
@@ -122,11 +115,6 @@ const ChatSection = ({
     } catch (error) {
       console.error('Error calling generate API:', error);
       
-      // Hide typing indicator
-      if (window.removeTypingIndicator) {
-        window.removeTypingIndicator();
-      }
-      
       // Show error message
       setChatMessages([
         ...newMessages,
@@ -134,6 +122,7 @@ const ChatSection = ({
       ]);
     } finally {
       setIsLoading(false);
+      setIsTyping(false);
     }
   };
   
@@ -230,7 +219,12 @@ const ChatSection = ({
             </div>
           ))}
           
-          {/* Typing indicator would appear here dynamically */}
+          {/* Typing indicator */}
+          {isTyping && (
+            <div className="flex justify-start">
+              <TypingIndicator />
+            </div>
+          )}
         </div>
       </ScrollArea>
       
@@ -267,13 +261,5 @@ const ChatSection = ({
     </div>
   );
 };
-
-// Add global typing declarations for the functions defined in index.html
-declare global {
-  interface Window {
-    showTypingIndicator?: () => void;
-    removeTypingIndicator?: () => void;
-  }
-}
 
 export default ChatSection;

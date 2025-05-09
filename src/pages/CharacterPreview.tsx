@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Layout from '../components/Layout';
@@ -16,51 +17,64 @@ const CharacterPreview = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // In a real app, fetch character data based on characterId
-    // For now, just simulate loading
+    // Try to load character data from localStorage
+    const storedCharacter = localStorage.getItem('previewCharacter');
+    
+    if (storedCharacter) {
+      setCharacter(JSON.parse(storedCharacter));
+      setLoading(false);
+      // Clear after loading to avoid stale data on next visit
+      localStorage.removeItem('previewCharacter');
+      return;
+    }
+    
+    // If no stored character, try to load from API or use default
+    // For now, we'll just simulate loading with a placeholder
     setLoading(true);
     
-    // Mock data for demonstration
     setTimeout(() => {
-      setCharacter({
+      // Use stored character from API or create default if needed
+      const defaultCharacter: Character = {
         id: characterId || 'char_default',
-        name: 'Kaelen Thorne',
-        race: 'Human',
-        jobs: 'Warrior, Scout',
-        role: 'Tank / DPS',
-        parents: 'Eamon Thorne and Lila Thorne',
+        name: 'New Character',
+        race: '',
+        jobs: '',
+        role: '',
+        parents: '',
         personality: {
-          mbti: 'ESTJ',
-          enneagram: '8w7',
-          alignment: 'Neutral Good',
-          traits: 'Brave, Resilient, Tactical, Stubborn, Honorable',
+          mbti: '',
+          enneagram: '',
+          alignment: '',
+          traits: '',
         },
-        bio: 'Raised in a border village, Kaelen trained from a young age to defend his home. He has fought in numerous skirmishes and seeks to prove his strength through honorable combat.',
+        bio: 'This character has no biography yet.',
         equipment: {
-          weapon: 'Dual-handed broadsword with intricate runes along the blade',
-          armor: 'Heavy plate armor with reinforced leather padding and a crimson crest',
+          weapon: '',
+          armor: '',
         },
-        style: 'Short, messy brown hair; sharp green eyes; practical steel-gray armor with red accents, leather boots, and a tactical cape',
+        style: '',
         stats: {
-          hp: '46',
-          mp: '10',
-          physAttack: '45',
-          physDefense: '44',
-          agility: '28',
-          magicAttack: '12',
-          magicDefense: '15',
-          resist: '17',
+          hp: '0',
+          mp: '0',
+          physAttack: '0',
+          physDefense: '0',
+          agility: '0',
+          magicAttack: '0',
+          magicDefense: '0',
+          resist: '0',
         },
         abilities: {
-          mainAbility: 'Banner of Valor',
-          signatureSkills: 'Power Strike, Shield Bash, Rallying Cry',
-          passives: 'Hardiness, Combat Reflexes, Armor Mastery',
+          mainAbility: '',
+          signatureSkills: '',
+          passives: '',
         },
-        notes: '• Known for his leadership on the battlefield\n• Has a rivalry with a rival warrior, Morgan\n• Dreams of uniting the scattered clans of the region',
-        relationships: '• Eamon Thorne — Father, retired blacksmith and veteran fighter\n• Lila Thorne — Mother, healer and village healer\n• Morgan — Rival warrior, often competes in tournaments',
-      });
+        notes: '',
+        relationships: '',
+      };
+      
+      setCharacter(defaultCharacter);
       setLoading(false);
-    }, 1000);
+    }, 500);
   }, [characterId]);
 
   const handleExport = async (type: 'pdf' | 'image') => {
