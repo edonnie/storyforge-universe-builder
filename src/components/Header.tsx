@@ -1,14 +1,9 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Menu, X, User, LogOut } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import AuthModal from './AuthModal';
-import { useToast } from "@/hooks/use-toast";
-
-// API Base URL
-const API_BASE_URL = "https://fateengine-server.onrender.com";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -17,7 +12,6 @@ const Header = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [subscriptionPlan, setSubscriptionPlan] = useState<'free' | 'pro'>('free');
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   
@@ -31,70 +25,49 @@ const Header = () => {
     setIsAuthModalOpen(true);
   };
 
-  // Check auth and subscription status
-  useEffect(() => {
-    const checkAuthStatus = () => {
-      const token = localStorage.getItem('fateToken');
-      const plan = localStorage.getItem('fatePlan');
-      
-      if (token) {
-        setIsLoggedIn(true);
-        setSubscriptionPlan(plan === 'pro' ? 'pro' : 'free');
-        
-        // Update localStorage for compatibility
-        localStorage.setItem('fateengine_session', 'true');
-        localStorage.setItem('fateengine_pro', plan === 'pro' ? 'true' : 'false');
-      } else {
-        setIsLoggedIn(false);
-        setSubscriptionPlan('free');
-      }
-    };
-    
-    checkAuthStatus();
-    
-    // Set up interval to check auth status periodically
-    const interval = setInterval(checkAuthStatus, 60000); // Every minute
-    
-    return () => clearInterval(interval);
-  }, []);
-
-  // Login function with backend integration
+  // Login function
   const handleLogin = () => {
-    // This is just to acknowledge successful login
-    // The actual token storage happens in AuthModal
     setIsLoggedIn(true);
     setIsAuthModalOpen(false);
     
-    // Check the plan from localStorage
-    const plan = localStorage.getItem('fatePlan');
-    setSubscriptionPlan(plan === 'pro' ? 'pro' : 'free');
+    // Store session info
+    localStorage.setItem('fateengine_session', 'true');
+    localStorage.setItem('fateToken', 'mock_token_' + Date.now());
+    
+    // Check if user has a pro subscription
+    // This would be replaced with actual API call to check subscription
+    const isPro = localStorage.getItem('fateengine_pro') === 'true';
+    setSubscriptionPlan(isPro ? 'pro' : 'free');
     
     // Redirect to dashboard after successful login
     navigate('/dashboard');
-    
-    toast({
-      title: "Login successful",
-      description: "Welcome back to FateEngine!",
-    });
   };
 
   // Logout function
   const handleLogout = () => {
-    localStorage.removeItem('fateToken');
-    localStorage.removeItem('fatePlan');
-    localStorage.removeItem('fateengine_session');
-    localStorage.removeItem('fateengine_pro');
-    
     setIsLoggedIn(false);
     setSubscriptionPlan('free');
-    
-    toast({
-      title: "Logged out",
-      description: "You have been logged out successfully.",
-    });
-    
-    navigate('/');
+    localStorage.removeItem('fateengine_session');
+    localStorage.removeItem('fateToken');
   };
+  
+  // Check session on component mount
+  useEffect(() => {
+    const checkSession = async () => {
+      // Simulate session check delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      const hasSession = localStorage.getItem('fateengine_session');
+      const isPro = localStorage.getItem('fateengine_pro') === 'true';
+      
+      if (hasSession === 'true') {
+        setIsLoggedIn(true);
+        setSubscriptionPlan(isPro ? 'pro' : 'free');
+      }
+    };
+    
+    checkSession();
+  }, []);
 
   return (
     <header className="w-full bg-background border-b border-muted sticky top-0 z-50">

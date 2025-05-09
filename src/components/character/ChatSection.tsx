@@ -8,7 +8,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { parseStructuredOutput, detectOutputType } from "../../utils/parseUtils";
 import { Character } from "../character/CharacterSheet";
 import TypingIndicator from './TypingIndicator';
-import { useToast } from "@/hooks/use-toast";
 
 // Define the API base URL
 const API_BASE_URL = "https://fateengine-server.onrender.com";
@@ -43,7 +42,6 @@ const ChatSection = ({
   const [isTyping, setIsTyping] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const { toast } = useToast();
   
   // Scroll to the bottom when messages change or typing state changes
   useEffect(() => {
@@ -64,22 +62,6 @@ const ChatSection = ({
   
   // Load chat history on initial render
   useEffect(() => {
-    const checkAuthentication = () => {
-      const token = localStorage.getItem('fateToken');
-      if (!token) {
-        toast({
-          title: "Authentication required",
-          description: "Please log in to use the chat feature.",
-          variant: "destructive"
-        });
-        navigate('/');
-        return false;
-      }
-      return true;
-    };
-    
-    if (!checkAuthentication()) return;
-    
     const savedChatHistory = localStorage.getItem('chatHistory');
     const savedCharacter = localStorage.getItem('currentCharacter');
     
@@ -90,23 +72,11 @@ const ChatSection = ({
     if (savedCharacter) {
       setCharacter(JSON.parse(savedCharacter));
     }
-  }, [navigate, setChatMessages, setCharacter, toast]);
+  }, []);
   
   const handleMessageSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputMessage.trim() || isLoading) return;
-    
-    // Check authentication
-    const token = localStorage.getItem('fateToken');
-    if (!token) {
-      toast({
-        title: "Authentication required",
-        description: "Please log in to use the chat feature.",
-        variant: "destructive"
-      });
-      navigate('/');
-      return;
-    }
     
     // Add user message to chat
     const newMessages = [
@@ -121,28 +91,18 @@ const ChatSection = ({
     setIsTyping(true);
     
     try {
+      // Get the token
+      const token = localStorage.getItem('fateToken');
+      
       // Call the generate API
       const response = await fetch(`${API_BASE_URL}/generate`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Authorization': token
+          'Authorization': token || ''
         },
         body: JSON.stringify({ prompt: newMessages })
       });
-      
-      if (response.status === 401) {
-        // Token expired or invalid
-        localStorage.removeItem('fateToken');
-        localStorage.removeItem('fatePlan');
-        toast({
-          title: "Session expired",
-          description: "Your session has expired. Please log in again.",
-          variant: "destructive"
-        });
-        navigate('/');
-        return;
-      }
       
       if (!response.ok) {
         // Handle error
@@ -188,12 +148,6 @@ const ChatSection = ({
         ...newMessages,
         { role: "assistant" as const, content: `⚠️ Error: Could not connect to the server. Please try again later.` }
       ]);
-      
-      toast({
-        title: "Connection error",
-        description: "Failed to connect to the AI engine. Please try again later.",
-        variant: "destructive"
-      });
     } finally {
       setIsLoading(false);
       setIsTyping(false);
@@ -267,85 +221,6 @@ const ChatSection = ({
     localStorage.removeItem('chatHistory');
     localStorage.removeItem('currentCharacter');
     localStorage.removeItem('lastFullResponse');
-    
-    toast({
-      title: "New chat started",
-      description: "Start creating a new character!"
-    });
-  };
-  
-  const handleSaveCharacter = async () => {
-    // Check authentication
-    const token = localStorage.getItem('fateToken');
-    if (!token) {
-      toast({
-        title: "Authentication required",
-        description: "Please log in to save your character.",
-        variant: "destructive"
-      });
-      navigate('/');
-      return;
-    }
-    
-    // Get project ID or create one if it doesn't exist
-    let projectId = localStorage.getItem('currentProjectId');
-    if (!projectId) {
-      projectId = `project_${Date.now()}`;
-      localStorage.setItem('currentProjectId', projectId);
-    }
-    
-    setIsLoading(true);
-    
-    try {
-      // Call the save API
-      const response = await fetch(`${API_BASE_URL}/save`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': token
-        },
-        body: JSON.stringify({
-          projectId,
-          characterData: character,
-          messageHistory: chatMessages
-        })
-      });
-      
-      if (response.status === 401) {
-        // Token expired or invalid
-        localStorage.removeItem('fateToken');
-        localStorage.removeItem('fatePlan');
-        toast({
-          title: "Session expired",
-          description: "Your session has expired. Please log in again.",
-          variant: "destructive"
-        });
-        navigate('/');
-        return;
-      }
-      
-      if (!response.ok) {
-        throw new Error(`Server error: ${response.status}`);
-      }
-      
-      toast({
-        title: "Character saved",
-        description: character.name ? `${character.name} has been saved successfully.` : "Character saved successfully."
-      });
-      
-      // Call the parent onSaveCharacter function if needed
-      onSaveCharacter();
-      
-    } catch (error) {
-      console.error('Error saving character:', error);
-      toast({
-        title: "Save failed",
-        description: "Failed to save your character. Please try again later.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
   };
   
   return (
@@ -354,7 +229,7 @@ const ChatSection = ({
       <div className="p-4 bg-background flex justify-between items-center">
         <Button 
           variant="outline" 
-          onClick={() => navigate(`/worlds/${worldId}`)}
+          onClick={() => window.location.href = `/worlds/${worldId}`}
         >
           <ArrowLeft size={16} className="mr-2" /> Back to World
         </Button>
@@ -422,7 +297,7 @@ const ChatSection = ({
           
           <Button 
             variant="default"
-            onClick={handleSaveCharacter}
+            onClick={onSaveCharacter}
             className="gap-2"
             disabled={isLoading}
           >
