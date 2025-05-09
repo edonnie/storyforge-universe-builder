@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,14 @@ import AuthModal from '../components/AuthModal';
 const LandingPage = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('signup');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
+  
+  // Check login status on component mount
+  useEffect(() => {
+    const token = localStorage.getItem('fateToken');
+    setIsLoggedIn(!!token);
+  }, []);
   
   // Login function that redirects to dashboard
   const handleLogin = () => {
@@ -24,6 +31,16 @@ const LandingPage = () => {
     setIsAuthModalOpen(true);
   };
   
+  const handlePrimaryAction = () => {
+    if (isLoggedIn) {
+      // If logged in, go directly to dashboard
+      navigate('/dashboard');
+    } else {
+      // If not logged in, open signup modal
+      openSignupModal();
+    }
+  };
+  
   return (
     <Layout>
       {/* Hero Section */}
@@ -36,8 +53,8 @@ const LandingPage = () => {
             FateEngine is the ultimate universe builder for writers, game designers, and worldbuilding enthusiasts.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Button onClick={openSignupModal} size="lg" className="text-lg px-8 py-6">
-              Start Building <ArrowRight className="ml-2" size={20} />
+            <Button onClick={handlePrimaryAction} size="lg" className="text-lg px-8 py-6">
+              {isLoggedIn ? "Go to Dashboard" : "Start Building"} <ArrowRight className="ml-2" size={20} />
             </Button>
             <Link to="/plans">
               <Button variant="outline" size="lg" className="text-lg px-8 py-6">
@@ -106,8 +123,8 @@ const LandingPage = () => {
           <p className="text-xl mb-8 max-w-2xl mx-auto text-foreground/80">
             Join thousands of worldbuilders and bring your ideas to life with FateEngine.
           </p>
-          <Button onClick={openSignupModal} size="lg" className="text-lg px-8 py-6">
-            Get Started Free
+          <Button onClick={handlePrimaryAction} size="lg" className="text-lg px-8 py-6">
+            {isLoggedIn ? "Go to Dashboard" : "Get Started Free"}
           </Button>
         </div>
       </section>

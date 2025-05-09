@@ -1,10 +1,10 @@
 
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Mail } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 
 // API Base URL
@@ -29,6 +29,7 @@ const AuthModal = ({ isOpen, onClose, mode, setMode, onLogin }: AuthModalProps) 
   const [newPassword, setNewPassword] = useState('');
   const [showVerificationForm, setShowVerificationForm] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
+  const [resetStepTwo, setResetStepTwo] = useState(false);
   
   const { toast } = useToast();
 
@@ -76,6 +77,11 @@ const AuthModal = ({ isOpen, onClose, mode, setMode, onLogin }: AuthModalProps) 
           
           // Close modal and notify parent
           onLogin();
+          
+          toast({
+            title: "Login successful",
+            description: "Welcome to FateEngine!",
+          });
         } else if (response.status === 403) {
           setError('Please verify your email before logging in.');
         } else if (response.status === 401) {
@@ -133,20 +139,28 @@ const AuthModal = ({ isOpen, onClose, mode, setMode, onLogin }: AuthModalProps) 
         body: JSON.stringify({ email })
       });
       
-      const data = await response.json();
+      // Check if the response is valid JSON before parsing
+      const contentType = response.headers.get("content-type");
+      let data;
       
-      if (response.status === 200) {
+      if (contentType && contentType.includes("application/json")) {
+        data = await response.json();
+      } else {
+        // Handle non-JSON response
+        const text = await response.text();
+        console.error("Non-JSON response:", text);
+        throw new Error("Server returned an invalid response");
+      }
+      
+      if (response.ok) {
         toast({
           title: "Reset code sent",
           description: "Check your email for the password reset code.",
         });
         // Show the code entry form
-        setShowResetForm(false);
-        setShowVerificationForm(true);
-      } else if (response.status === 404) {
-        setError('No account found with that email.');
+        setResetStepTwo(true);
       } else {
-        setError(data.error || 'An error occurred. Please try again.');
+        setError(data?.error || 'Failed to send reset code. Please try again.');
       }
     } catch (err) {
       console.error('Password reset error:', err);
@@ -176,9 +190,20 @@ const AuthModal = ({ isOpen, onClose, mode, setMode, onLogin }: AuthModalProps) 
         body: JSON.stringify({ email, code: verificationCode })
       });
       
-      const data = await response.json();
+      // Handle possible non-JSON response
+      const contentType = response.headers.get("content-type");
+      let data;
       
-      if (response.status === 200) {
+      if (contentType && contentType.includes("application/json")) {
+        data = await response.json();
+      } else {
+        // Handle non-JSON response
+        const text = await response.text();
+        console.error("Non-JSON response:", text);
+        throw new Error("Server returned an invalid response");
+      }
+      
+      if (response.ok) {
         toast({
           title: "Email verified",
           description: "Your account has been verified. You can now log in.",
@@ -186,7 +211,7 @@ const AuthModal = ({ isOpen, onClose, mode, setMode, onLogin }: AuthModalProps) 
         setShowVerificationForm(false);
         setMode('login');
       } else {
-        setError(data.error || 'Invalid verification code.');
+        setError(data?.error || 'Invalid verification code.');
       }
     } catch (err) {
       console.error('Verification error:', err);
@@ -216,9 +241,20 @@ const AuthModal = ({ isOpen, onClose, mode, setMode, onLogin }: AuthModalProps) 
         body: JSON.stringify({ email, code: resetCode, newPassword })
       });
       
-      const data = await response.json();
+      // Handle possible non-JSON response
+      const contentType = response.headers.get("content-type");
+      let data;
       
-      if (response.status === 200) {
+      if (contentType && contentType.includes("application/json")) {
+        data = await response.json();
+      } else {
+        // Handle non-JSON response
+        const text = await response.text();
+        console.error("Non-JSON response:", text);
+        throw new Error("Server returned an invalid response");
+      }
+      
+      if (response.ok) {
         toast({
           title: "Password updated",
           description: "Your password has been reset. You can now log in.",
@@ -226,9 +262,10 @@ const AuthModal = ({ isOpen, onClose, mode, setMode, onLogin }: AuthModalProps) 
         setShowResetForm(false);
         setResetCode('');
         setNewPassword('');
+        setResetStepTwo(false);
         setMode('login');
       } else {
-        setError(data.error || 'Invalid reset code.');
+        setError(data?.error || 'Invalid reset code or password.');
       }
     } catch (err) {
       console.error('Password reset error:', err);
@@ -248,6 +285,7 @@ const AuthModal = ({ isOpen, onClose, mode, setMode, onLogin }: AuthModalProps) 
     setError(null);
     setShowResetForm(false);
     setShowVerificationForm(false);
+    setResetStepTwo(false);
   };
 
   return (
@@ -261,13 +299,25 @@ const AuthModal = ({ isOpen, onClose, mode, setMode, onLogin }: AuthModalProps) 
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-center">
             {showResetForm 
-              ? 'Reset Password' 
+              ? resetStepTwo ? 'Enter Reset Code' : 'Reset Password' 
               : showVerificationForm
                 ? mode === 'signup' ? 'Verify Your Email' : 'Reset Your Password'
                 : mode === 'login' 
                   ? 'Welcome Back' 
                   : 'Create Account'}
           </DialogTitle>
+          <DialogDescription>
+            {showResetForm 
+              ? resetStepTwo
+                ? 'Enter the code sent to your email and your new password'
+                : 'Enter your email to receive a password reset code'
+              : showVerificationForm
+                ? 'Enter the verification code sent to your email'
+                : mode === 'login'
+                  ? 'Log in to access your worlds and characters'
+                  : 'Create a new account to start building your worlds'
+            }
+          </DialogDescription>
         </DialogHeader>
         
         {error && (
@@ -316,8 +366,8 @@ const AuthModal = ({ isOpen, onClose, mode, setMode, onLogin }: AuthModalProps) 
               </Button>
             </div>
           </form>
-        ) : showVerificationForm && mode === 'login' ? (
-          <form onSubmit={handleResetWithCode} className="space-y-4">
+        ) : showResetForm && !resetStepTwo ? (
+          <form onSubmit={handlePasswordReset} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="reset-email">Email</Label>
               <Input
@@ -330,6 +380,22 @@ const AuthModal = ({ isOpen, onClose, mode, setMode, onLogin }: AuthModalProps) 
               />
             </div>
             
+            <div className="flex flex-col space-y-2">
+              <Button type="submit" disabled={isLoading} className="flex items-center gap-2">
+                {isLoading ? 'Sending...' : 'Send Reset Code'}
+                <Mail size={16} />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setShowResetForm(false)}
+              >
+                Back to Login
+              </Button>
+            </div>
+          </form>
+        ) : showResetForm && resetStepTwo ? (
+          <form onSubmit={handleResetWithCode} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="reset-code">Reset Code</Label>
               <Input
@@ -361,36 +427,9 @@ const AuthModal = ({ isOpen, onClose, mode, setMode, onLogin }: AuthModalProps) 
               <Button
                 type="button"
                 variant="ghost"
-                onClick={() => setShowVerificationForm(false)}
+                onClick={() => setResetStepTwo(false)}
               >
-                Back to Login
-              </Button>
-            </div>
-          </form>
-        ) : showResetForm ? (
-          <form onSubmit={handlePasswordReset} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="reset-email">Email</Label>
-              <Input
-                id="reset-email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
-                className="bg-muted"
-              />
-            </div>
-            
-            <div className="flex flex-col space-y-2">
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? 'Sending...' : 'Send Reset Link'}
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setShowResetForm(false)}
-              >
-                Back to Login
+                Back to Previous Step
               </Button>
             </div>
           </form>

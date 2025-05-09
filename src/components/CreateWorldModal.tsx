@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogD
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 
 // API Base URL
 const API_BASE_URL = "https://fateengine-server.onrender.com";
@@ -19,6 +20,7 @@ const CreateWorldModal = ({ isOpen, onClose, onCreate }: CreateWorldModalProps) 
   const [worldName, setWorldName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +32,13 @@ const CreateWorldModal = ({ isOpen, onClose, onCreate }: CreateWorldModalProps) 
       // Get authentication token
       const token = localStorage.getItem('fateToken');
       if (!token) {
-        throw new Error('Not authenticated');
+        toast({
+          title: "Authentication error",
+          description: "You must be logged in to create a world.",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
       }
       
       // Create a new world through the API
@@ -44,7 +52,8 @@ const CreateWorldModal = ({ isOpen, onClose, onCreate }: CreateWorldModalProps) 
       });
       
       if (!response.ok) {
-        throw new Error(`Server returned ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Server returned ${response.status}`);
       }
       
       const data = await response.json();
@@ -52,6 +61,11 @@ const CreateWorldModal = ({ isOpen, onClose, onCreate }: CreateWorldModalProps) 
       
       // Call the onCreate callback (which will update the UI)
       onCreate(worldName);
+      
+      toast({
+        title: "World created",
+        description: `"${worldName}" has been created successfully.`
+      });
       
       // Close the modal
       setIsLoading(false);
@@ -62,6 +76,11 @@ const CreateWorldModal = ({ isOpen, onClose, onCreate }: CreateWorldModalProps) 
       navigate(`/worlds/${worldId}`);
     } catch (error) {
       console.error('Error creating world:', error);
+      toast({
+        title: "Failed to create world",
+        description: error instanceof Error ? error.message : "Please try again later",
+        variant: "destructive"
+      });
       setIsLoading(false);
       // Note: We don't close the modal on error so user can try again
     }
