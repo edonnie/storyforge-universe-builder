@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
@@ -9,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Plus, Search, Download, FileText, Users } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import { fetchWorlds } from "@/utils/worldUtils";
 
 // API Base URL
 const API_BASE_URL = "https://fateengine-server.onrender.com";
@@ -53,43 +53,66 @@ const Dashboard = () => {
       try {
         setIsLoading(true);
         
-        // Load user data from backend
-        const response = await fetch(`${API_BASE_URL}/load`, {
-          method: 'GET',
-          headers: {
-            'Authorization': token
-          }
-        });
+        let worldsData: World[] = [];
+        let entitiesCount = 0;
         
-        if (response.status === 401) {
-          // Token expired or invalid
-          localStorage.removeItem('fateToken');
-          localStorage.removeItem('fatePlan');
-          localStorage.removeItem('fateengine_session');
-          localStorage.removeItem('fateengine_pro');
-          navigate('/');
-          return;
-        }
-        
-        if (!response.ok) {
-          throw new Error(`Server returned ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        if (data.content) {
-          const content = JSON.parse(data.content);
+        try {
+          // Try to load user data from backend first
+          const response = await fetch(`${API_BASE_URL}/load`, {
+            method: 'GET',
+            headers: {
+              'Authorization': token
+            }
+          });
           
-          // Set worlds
-          if (content.fateWorlds) {
-            setWorlds(content.fateWorlds);
+          if (response.status === 401) {
+            // Token expired or invalid
+            localStorage.removeItem('fateToken');
+            localStorage.removeItem('fatePlan');
+            localStorage.removeItem('fateengine_session');
+            localStorage.removeItem('fateengine_pro');
+            navigate('/');
+            return;
           }
           
-          // Set total entities
-          if (content.fateProjects) {
-            setTotalEntities(content.fateProjects.length);
+          if (!response.ok) {
+            throw new Error(`Server returned ${response.status}`);
+          }
+          
+          const data = await response.json();
+          
+          if (data.content) {
+            const content = JSON.parse(data.content);
+            
+            // Set worlds
+            if (content.fateWorlds) {
+              worldsData = content.fateWorlds;
+            }
+            
+            // Set total entities
+            if (content.fateProjects) {
+              entitiesCount = content.fateProjects.length;
+            }
+          }
+        } catch (apiError) {
+          console.error('API error loading user data:', apiError);
+          
+          // Fallback to local data if API fails
+          try {
+            console.log('Falling back to local world data');
+            const userId = 'local-user';
+            worldsData = await fetchWorlds(userId);
+            entitiesCount = 0;  // We don't have this info locally
+          } catch (localError) {
+            console.error('Local fallback also failed:', localError);
+            throw new Error('Could not load worlds through API or local fallback');
           }
         }
+        
+        // Update state with whatever data we got
+        setWorlds(worldsData);
+        setTotalEntities(entitiesCount);
+        
       } catch (error) {
         console.error('Error loading user data:', error);
         toast({
@@ -106,57 +129,20 @@ const Dashboard = () => {
   }, [navigate, toast]);
   
   // Handle world creation
-  const handleCreateWorld = async (name: string) => {
-    const token = localStorage.getItem('fateToken');
-    if (!token) {
-      toast({
-        title: "Authentication error",
-        description: "Please log in again to create a world.",
-        variant: "destructive"
-      });
-      navigate('/');
-      return;
-    }
+  const handleCreateWorld = (name: string) => {
+    // Add to local state for immediate feedback
+    const newWorld = {
+      id: `world_${Date.now()}`,
+      name,
+      createdAt: new Date().toISOString(),
+    };
     
-    try {
-      // Add to local state first for immediate feedback
-      const newWorld = {
-        id: `world_${Date.now()}`,
-        name,
-        createdAt: new Date().toISOString(),
-      };
-      
-      setWorlds([...worlds, newWorld]);
-      
-      // Save the world to backend
-      const response = await fetch(`${API_BASE_URL}/worlds`, {
-        method: 'POST',
-        headers: {
-          'Authorization': token,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ name })
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Server returned ${response.status}`);
-      }
-      
-      // Get the newly created world from the response
-      const data = await response.json();
-      
-      toast({
-        title: "World created",
-        description: `${name} has been created successfully.`
-      });
-    } catch (error) {
-      console.error('Error creating world:', error);
-      toast({
-        title: "Error creating world",
-        description: "Failed to save your world. Please try again later.",
-        variant: "destructive"
-      });
-    }
+    setWorlds([...worlds, newWorld]);
+    
+    toast({
+      title: "World created",
+      description: `${name} has been created successfully.`
+    });
   };
   
   // Handle subscription management

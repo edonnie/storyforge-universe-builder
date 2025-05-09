@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { createWorld } from "@/utils/worldUtils";
 
 // API Base URL
 const API_BASE_URL = "https://fateengine-server.onrender.com";
@@ -41,39 +42,61 @@ const CreateWorldModal = ({ isOpen, onClose, onCreate }: CreateWorldModalProps) 
         return;
       }
       
-      // Create a new world through the API
-      const response = await fetch(`${API_BASE_URL}/worlds`, {
-        method: 'POST',
-        headers: {
-          'Authorization': token,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ name: worldName })
-      });
+      let worldId = '';
+      let success = false;
       
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Server returned ${response.status}`);
+      try {
+        // Try to create a new world through the API first
+        const response = await fetch(`${API_BASE_URL}/worlds`, {
+          method: 'POST',
+          headers: {
+            'Authorization': token,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ name: worldName })
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || `Server returned ${response.status}`);
+        }
+        
+        const data = await response.json();
+        worldId = data.id;
+        success = true;
+      } catch (apiError) {
+        console.error('API error creating world:', apiError);
+        
+        // Fallback to local implementation
+        try {
+          console.log('Falling back to local world creation');
+          const userId = 'local-user';
+          const newWorld = await createWorld(userId, worldName);
+          worldId = newWorld.id;
+          success = true;
+        } catch (localError) {
+          console.error('Local fallback also failed:', localError);
+          throw new Error('Could not create world through API or local fallback');
+        }
       }
       
-      const data = await response.json();
-      const worldId = data.id;
-      
-      // Call the onCreate callback (which will update the UI)
-      onCreate(worldName);
-      
-      toast({
-        title: "World created",
-        description: `"${worldName}" has been created successfully.`
-      });
-      
-      // Close the modal
-      setIsLoading(false);
-      setWorldName('');
-      onClose();
-      
-      // Navigate to the newly created world detail page
-      navigate(`/worlds/${worldId}`);
+      if (success) {
+        // Call the onCreate callback (which will update the UI)
+        onCreate(worldName);
+        
+        toast({
+          title: "World created",
+          description: `"${worldName}" has been created successfully.`
+        });
+        
+        // Close the modal
+        setIsLoading(false);
+        setWorldName('');
+        onClose();
+        
+        // Navigate to the newly created world detail page
+        navigate(`/worlds/${worldId}`);
+      }
     } catch (error) {
       console.error('Error creating world:', error);
       toast({
@@ -111,7 +134,7 @@ const CreateWorldModal = ({ isOpen, onClose, onCreate }: CreateWorldModalProps) 
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading || !worldName.trim()} loading={isLoading}>
+            <Button type="submit" disabled={isLoading || !worldName.trim()}>
               {isLoading ? 'Creating...' : 'Create World'}
             </Button>
           </DialogFooter>
