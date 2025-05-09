@@ -6,15 +6,23 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Check } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 
+// API Base URL
+const API_BASE_URL = "https://fateengine-server.onrender.com";
+
 const Plans = () => {
   const [isAnnual, setIsAnnual] = useState(false);
   const [currentPlan, setCurrentPlan] = useState<'free' | 'pro'>('free');
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   
   // Check user's current plan on component mount
   useEffect(() => {
-    const isPro = localStorage.getItem('fateengine_pro') === 'true';
-    setCurrentPlan(isPro ? 'pro' : 'free');
+    const checkPlan = async () => {
+      const plan = localStorage.getItem('fatePlan');
+      setCurrentPlan(plan === 'pro' ? 'pro' : 'free');
+    };
+    
+    checkPlan();
   }, []);
   
   // Plans data
@@ -37,8 +45,8 @@ const Plans = () => {
     {
       name: 'Pro',
       description: 'For serious worldbuilders',
-      monthlyPrice: 9.99,
-      annualPrice: 99.99,
+      monthlyPrice: 9,
+      annualPrice: 99,
       features: [
         'Unlimited Worlds',
         'Unlimited Entities',
@@ -48,7 +56,7 @@ const Plans = () => {
         'Custom Maps (Coming Soon)',
         'Priority Support',
       ],
-      buttonText: currentPlan === 'pro' ? 'Current Plan' : 'Upgrade to Pro',
+      buttonText: currentPlan === 'pro' ? 'Manage Billing' : 'Upgrade to Pro',
       buttonVariant: 'default',
       isCurrentPlan: currentPlan === 'pro',
       popular: true,
@@ -57,9 +65,9 @@ const Plans = () => {
   
   const handlePlanSelect = (planName: string) => {
     // Check if user is logged in
-    const hasSession = localStorage.getItem('fateengine_session') === 'true';
+    const token = localStorage.getItem('fateToken');
     
-    if (!hasSession) {
+    if (!token) {
       toast({
         title: "Login required",
         description: "Please log in to change your subscription plan",
@@ -68,36 +76,86 @@ const Plans = () => {
       return;
     }
     
-    if (planName === currentPlan) {
+    if (planName.toLowerCase() === currentPlan) {
       // Already on this plan
       return;
     }
     
-    if (planName === 'Pro') {
-      // This would connect to a payment processor in a real app
-      localStorage.setItem('fateengine_pro', 'true');
-      setCurrentPlan('pro');
-      toast({
-        title: "Subscription updated",
-        description: "You are now a Pro subscriber!",
-      });
+    setIsLoading(true);
+    
+    if (planName.toLowerCase() === 'pro') {
+      // Create checkout session
+      fetch(`${API_BASE_URL}/create-checkout-session`, {
+        method: 'POST',
+        headers: {
+          'Authorization': token,
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          toast({
+            title: "Checkout error",
+            description: data.error || "Failed to start checkout process.",
+            variant: "destructive"
+          });
+        }
+      })
+      .catch(error => {
+        console.error('Checkout error:', error);
+        toast({
+          title: "Connection error",
+          description: "Unable to connect to the payment server. Please try again later.",
+          variant: "destructive"
+        });
+      })
+      .finally(() => setIsLoading(false));
     } else {
-      // Downgrade to free
-      localStorage.setItem('fateengine_pro', 'false');
-      setCurrentPlan('free');
-      toast({
-        title: "Subscription updated",
-        description: "You have downgraded to the free plan",
-      });
+      // Open billing portal to manage/cancel subscription
+      fetch(`${API_BASE_URL}/billing-portal`, {
+        method: 'POST',
+        headers: {
+          'Authorization': token,
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          toast({
+            title: "Portal error",
+            description: data.error || "Failed to open billing portal.",
+            variant: "destructive"
+          });
+        }
+      })
+      .catch(error => {
+        console.error('Billing portal error:', error);
+        toast({
+          title: "Connection error",
+          description: "Unable to connect to the billing server. Please try again later.",
+          variant: "destructive"
+        });
+      })
+      .finally(() => setIsLoading(false));
     }
   };
   
   return (
     <Layout>
       <div className="py-12 max-w-5xl mx-auto">
-        <h1 className="text-3xl font-bold text-center mb-3">Choose Your Plan</h1>
+        <h1 className="text-3xl font-bold text-center mb-3">
+          {currentPlan === 'pro' ? 'Your Subscription' : 'Choose Your Plan'}
+        </h1>
         <p className="text-center text-muted-foreground mb-8">
-          Unlock the full potential of FateEngine with our Pro subscription.
+          {currentPlan === 'pro' 
+            ? 'Manage your FateEngine subscription below.'
+            : 'Unlock the full potential of FateEngine with our Pro subscription.'}
         </p>
         
         {/* Billing Toggle */}
@@ -114,7 +172,7 @@ const Plans = () => {
             />
           </div>
           <span className={`ml-2 ${!isAnnual ? 'text-muted-foreground' : ''}`}>
-            Annual <span className="text-primary text-sm font-medium ml-1">Save 20%</span>
+            Annual <span className="text-primary text-sm font-medium ml-1">Save 17%</span>
           </span>
         </div>
         
@@ -124,7 +182,7 @@ const Plans = () => {
             <Card 
               key={plan.name} 
               className={`bg-card border ${
-                plan.popular ? 'border-primary' : ''
+                plan.isCurrentPlan ? 'border-primary' : ''
               } relative overflow-hidden`}
             >
               {plan.popular && (
@@ -164,7 +222,8 @@ const Plans = () => {
                   className="w-full"
                   variant={plan.buttonVariant as any}
                   onClick={() => handlePlanSelect(plan.name)}
-                  disabled={plan.isCurrentPlan}
+                  disabled={plan.isCurrentPlan || isLoading}
+                  loading={isLoading}
                 >
                   {plan.buttonText}
                 </Button>
