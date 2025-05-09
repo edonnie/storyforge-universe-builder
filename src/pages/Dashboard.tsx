@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
@@ -58,6 +59,7 @@ const Dashboard = () => {
         
         try {
           // Try to load user data from backend first
+          console.log('Attempting to load user data from API...');
           const response = await fetch(`${API_BASE_URL}/load`, {
             method: 'GET',
             headers: {
@@ -100,7 +102,7 @@ const Dashboard = () => {
           // Fallback to local data if API fails
           try {
             console.log('Falling back to local world data');
-            const userId = 'local-user';
+            const userId = localStorage.getItem('fateUserId') || 'local-user';
             worldsData = await fetchWorlds(userId);
             entitiesCount = 0;  // We don't have this info locally
           } catch (localError) {
@@ -129,15 +131,17 @@ const Dashboard = () => {
   }, [navigate, toast]);
   
   // Handle world creation
-  const handleCreateWorld = (name: string) => {
+  const handleCreateWorld = (name: string, worldId: string) => {
     // Add to local state for immediate feedback
     const newWorld = {
-      id: `world_${Date.now()}`,
+      id: worldId,
       name,
       createdAt: new Date().toISOString(),
     };
     
     setWorlds([...worlds, newWorld]);
+    
+    console.log('Added new world to state:', newWorld);
     
     toast({
       title: "World created",

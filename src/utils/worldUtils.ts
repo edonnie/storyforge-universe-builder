@@ -1,4 +1,3 @@
-
 // Utility functions for world management
 export interface World {
   id: string;
@@ -26,10 +25,37 @@ export interface TimelineEvent {
   createdAt: string;
 }
 
+// Helper function to get worlds from localStorage
+const getLocalWorlds = (): World[] => {
+  try {
+    const localWorlds = localStorage.getItem('fateWorlds');
+    return localWorlds ? JSON.parse(localWorlds) : [];
+  } catch (error) {
+    console.error('Error retrieving worlds from localStorage:', error);
+    return [];
+  }
+};
+
+// Helper function to save worlds to localStorage
+const saveLocalWorlds = (worlds: World[]): void => {
+  try {
+    localStorage.setItem('fateWorlds', JSON.stringify(worlds));
+  } catch (error) {
+    console.error('Error saving worlds to localStorage:', error);
+  }
+};
+
 // These functions will be replaced with Supabase calls in the future
 export const fetchWorlds = async (userId: string): Promise<World[]> => {
-  // Mock data for now
-  const worlds = [
+  // Check localStorage first
+  const localWorlds = getLocalWorlds();
+  if (localWorlds.length > 0) {
+    console.log('Retrieved worlds from localStorage:', localWorlds);
+    return localWorlds;
+  }
+  
+  // Mock data as fallback
+  const mockWorlds = [
     { 
       id: '1', 
       name: 'Eldoria', 
@@ -45,13 +71,37 @@ export const fetchWorlds = async (userId: string): Promise<World[]> => {
     { id: '3', name: 'Astralheim', createdAt: '2023-07-10T15:45:00Z', synopsis: 'A world where the boundaries between planes are thin and extraplanar beings are common.' },
   ];
   
-  return new Promise(resolve => {
-    setTimeout(() => resolve(worlds), 500);
-  });
+  // Store mock data in localStorage if nothing exists yet
+  if (localWorlds.length === 0) {
+    saveLocalWorlds(mockWorlds);
+  }
+  
+  return mockWorlds;
 };
 
 export const fetchWorldById = async (worldId: string): Promise<World | null> => {
-  const worlds = {
+  // First check localStorage for user-created worlds
+  const localWorlds = getLocalWorlds();
+  const localWorld = localWorlds.find(world => world.id === worldId);
+  
+  if (localWorld) {
+    console.log('Found world in localStorage:', localWorld);
+    return localWorld;
+  }
+  
+  // Check for the most recently created world
+  const lastCreatedWorldId = localStorage.getItem('lastCreatedWorldId');
+  if (lastCreatedWorldId === worldId) {
+    const lastCreatedWorld = localStorage.getItem('lastCreatedWorld');
+    if (lastCreatedWorld) {
+      const parsedWorld = JSON.parse(lastCreatedWorld);
+      console.log('Using last created world:', parsedWorld);
+      return parsedWorld;
+    }
+  }
+  
+  // Fallback to mock data if not found
+  const mockWorlds = {
     '1': { 
       id: '1', 
       name: 'Eldoria', 
@@ -67,9 +117,8 @@ export const fetchWorldById = async (worldId: string): Promise<World | null> => 
     '3': { id: '3', name: 'Astralheim', createdAt: '2023-07-10T15:45:00Z', synopsis: 'A world where the boundaries between planes are thin and extraplanar beings are common.' },
   };
   
-  return new Promise(resolve => {
-    setTimeout(() => resolve(worlds[worldId as keyof typeof worlds] || null), 300);
-  });
+  console.log('World not found in localStorage, checking mock data for ID:', worldId);
+  return mockWorlds[worldId as keyof typeof mockWorlds] || null;
 };
 
 export const fetchEntitiesByWorldId = async (worldId: string, type?: EntityType): Promise<Entity[]> => {
@@ -118,11 +167,21 @@ export const createWorld = async (userId: string, name: string): Promise<World> 
     id: Math.random().toString(36).substr(2, 9),
     name,
     createdAt: new Date().toISOString(),
+    synopsis: '',
+    timeline: []
   };
   
-  return new Promise(resolve => {
-    setTimeout(() => resolve(newWorld), 500);
-  });
+  // Store the newly created world in localStorage for future reference
+  localStorage.setItem('lastCreatedWorld', JSON.stringify(newWorld));
+  localStorage.setItem('lastCreatedWorldId', newWorld.id);
+  
+  // Also add to the list of worlds in localStorage
+  const existingWorlds = getLocalWorlds();
+  existingWorlds.push(newWorld);
+  saveLocalWorlds(existingWorlds);
+  
+  console.log('Created new world:', newWorld);
+  return newWorld;
 };
 
 export const createEntity = async (worldId: string, name: string, type: EntityType, details: any): Promise<Entity> => {
@@ -141,6 +200,22 @@ export const createEntity = async (worldId: string, name: string, type: EntityTy
 };
 
 export const updateWorld = async (worldId: string, updates: Partial<World>): Promise<World> => {
+  // First check if we have this world in localStorage
+  const localWorlds = getLocalWorlds();
+  const worldIndex = localWorlds.findIndex(world => world.id === worldId);
+  
+  if (worldIndex !== -1) {
+    // Update the world in localStorage
+    const updatedWorld = {
+      ...localWorlds[worldIndex],
+      ...updates,
+    };
+    localWorlds[worldIndex] = updatedWorld;
+    saveLocalWorlds(localWorlds);
+    console.log('Updated world in localStorage:', updatedWorld);
+    return updatedWorld;
+  }
+  
   // This would be a Supabase update call in the real implementation
   return new Promise(resolve => {
     setTimeout(() => {

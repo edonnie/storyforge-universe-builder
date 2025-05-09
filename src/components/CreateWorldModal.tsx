@@ -14,7 +14,7 @@ const API_BASE_URL = "https://fateengine-server.onrender.com";
 interface CreateWorldModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (name: string) => void;
+  onCreate: (name: string, worldId: string) => void;
 }
 
 const CreateWorldModal = ({ isOpen, onClose, onCreate }: CreateWorldModalProps) => {
@@ -47,6 +47,7 @@ const CreateWorldModal = ({ isOpen, onClose, onCreate }: CreateWorldModalProps) 
       
       try {
         // Try to create a new world through the API first
+        console.log('Attempting to create world via API...');
         const response = await fetch(`${API_BASE_URL}/worlds`, {
           method: 'POST',
           headers: {
@@ -64,25 +65,31 @@ const CreateWorldModal = ({ isOpen, onClose, onCreate }: CreateWorldModalProps) 
         const data = await response.json();
         worldId = data.id;
         success = true;
+        console.log('World created via API with ID:', worldId);
       } catch (apiError) {
         console.error('API error creating world:', apiError);
         
         // Fallback to local implementation
         try {
           console.log('Falling back to local world creation');
-          const userId = 'local-user';
+          const userId = localStorage.getItem('fateUserId') || 'local-user';
           const newWorld = await createWorld(userId, worldName);
           worldId = newWorld.id;
+          // Save the world to localStorage for persistence
+          const existingWorlds = JSON.parse(localStorage.getItem('fateWorlds') || '[]');
+          existingWorlds.push(newWorld);
+          localStorage.setItem('fateWorlds', JSON.stringify(existingWorlds));
           success = true;
+          console.log('World created locally with ID:', worldId);
         } catch (localError) {
           console.error('Local fallback also failed:', localError);
           throw new Error('Could not create world through API or local fallback');
         }
       }
       
-      if (success) {
-        // Call the onCreate callback (which will update the UI)
-        onCreate(worldName);
+      if (success && worldId) {
+        // Call the onCreate callback with both the name AND id (this was missing before)
+        onCreate(worldName, worldId);
         
         toast({
           title: "World created",
@@ -94,8 +101,14 @@ const CreateWorldModal = ({ isOpen, onClose, onCreate }: CreateWorldModalProps) 
         setWorldName('');
         onClose();
         
+        // Save the world ID to ensure it's available for the WorldDetail page
+        localStorage.setItem('lastCreatedWorldId', worldId);
+        
         // Navigate to the newly created world detail page
+        console.log('Navigating to world detail page with ID:', worldId);
         navigate(`/worlds/${worldId}`);
+      } else {
+        throw new Error('World creation succeeded but no ID was returned');
       }
     } catch (error) {
       console.error('Error creating world:', error);
@@ -105,7 +118,6 @@ const CreateWorldModal = ({ isOpen, onClose, onCreate }: CreateWorldModalProps) 
         variant: "destructive"
       });
       setIsLoading(false);
-      // Note: We don't close the modal on error so user can try again
     }
   };
   
