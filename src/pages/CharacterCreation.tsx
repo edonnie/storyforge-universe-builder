@@ -20,8 +20,8 @@ const CharacterCreation = () => {
   
   return (
     <Layout>
-      {/* Main content with proper scrolling */}
-      <div className="h-[calc(100vh-4rem)]"> {/* 4rem accounts for the header height */}
+      {/* Main content with fixed height */}
+      <div className="fixed inset-0 pt-16 pb-0"> {/* pt-16 accounts for the header height */}
         <div className="flex h-full">
           {/* Left Column - Chat Area */}
           <ChatSection 
