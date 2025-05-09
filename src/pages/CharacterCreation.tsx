@@ -16,36 +16,6 @@ import CharacterPersonality from '../components/character/CharacterPersonality';
 // API Base URL
 const API_BASE_URL = "https://fateengine-server.onrender.com";
 
-interface Ability {
-  name: string;
-  description: string;
-  cooldown?: string;
-  cost?: string;
-}
-
-interface CharacterData {
-  id: string;
-  worldId: string;
-  name: string;
-  race: string;
-  role: string;
-  description: string;
-  background: string;
-  traits: {
-    appearance: string;
-    personality: string;
-    ideals: string;
-    bonds: string;
-    flaws: string;
-  };
-  stats: Array<{
-    name: string;
-    value: number;
-  }>;
-  abilities: Ability[];
-  image: string;
-}
-
 const CharacterCreation = () => {
   const { worldId, characterId } = useParams<{ worldId: string; characterId: string }>();
   const navigate = useNavigate();
@@ -55,7 +25,7 @@ const CharacterCreation = () => {
   const [activeTab, setActiveTab] = useState('basics');
   
   // Character data state
-  const [character, setCharacter] = useState<CharacterData>({
+  const [character, setCharacter] = useState({
     id: characterId || `char_${Date.now()}`,
     worldId: worldId || '',
     name: '',
@@ -132,19 +102,13 @@ const CharacterCreation = () => {
     if (name.includes('.')) {
       // For nested properties like traits.appearance
       const [parent, child] = name.split('.');
-      setCharacter(prev => {
-        // Create a shallow copy of the previous character
-        const newCharacter = { ...prev };
-        
-        // Create a copy of the nested object and update it
-        const parentObject = { ...(prev[parent as keyof CharacterData] as Record<string, any>) };
-        parentObject[child] = value;
-        
-        // Update the parent property in the new character object
-        newCharacter[parent as keyof CharacterData] = parentObject as any;
-        
-        return newCharacter;
-      });
+      setCharacter(prev => ({
+        ...prev,
+        [parent]: {
+          ...prev[parent as keyof typeof prev],
+          [child]: value
+        }
+      }));
     } else {
       setCharacter(prev => ({
         ...prev,
@@ -254,7 +218,7 @@ const CharacterCreation = () => {
           >
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={isSaving}>
+          <Button onClick={handleSave} loading={isSaving}>
             {isSaving ? 'Saving...' : 'Save Character'}
           </Button>
         </div>
@@ -410,14 +374,12 @@ const CharacterCreation = () => {
                 }
               }));
             }}
-            personality={{ mbti: '', enneagram: '', alignment: '', traits: '' }}
-            onSaveField={async () => {}}
           />
         </TabsContent>
         
         <TabsContent value="abilities">
           <CharacterAbilities 
-            abilities={character.abilities} 
+            abilities={character.abilities || []} 
             onChange={(abilities) => {
               setCharacter(prev => ({
                 ...prev,
