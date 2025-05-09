@@ -10,7 +10,6 @@ import ProfilePage from './pages/ProfilePage';
 import { Toaster } from '@/components/ui/toaster';
 import CharacterCreation from './pages/CharacterCreation';
 import CharacterPreview from './pages/CharacterPreview';
-import Index from './pages/Index';
 import './App.css';
 
 function App() {
@@ -27,7 +26,6 @@ function App() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/login" element={<Navigate to="/" />} />
         <Route path="/signup" element={<Navigate to="/" />} />
-        <Route path="/index" element={<Index />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Toaster />
