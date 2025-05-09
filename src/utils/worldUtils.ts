@@ -1,3 +1,4 @@
+
 // Utility functions for world management
 export interface World {
   id: string;
@@ -29,7 +30,20 @@ export interface TimelineEvent {
 const getLocalWorlds = (): World[] => {
   try {
     const localWorlds = localStorage.getItem('fateWorlds');
-    return localWorlds ? JSON.parse(localWorlds) : [];
+    if (!localWorlds) return [];
+    
+    // Parse worlds and remove any duplicates by ID
+    const worlds = JSON.parse(localWorlds) as World[];
+    const uniqueWorlds = worlds.reduce((acc, current) => {
+      const x = acc.find(item => item.id === current.id);
+      if (!x) {
+        return [...acc, current];
+      } else {
+        return acc;
+      }
+    }, [] as World[]);
+    
+    return uniqueWorlds;
   } catch (error) {
     console.error('Error retrieving worlds from localStorage:', error);
     return [];
@@ -39,7 +53,17 @@ const getLocalWorlds = (): World[] => {
 // Helper function to save worlds to localStorage
 const saveLocalWorlds = (worlds: World[]): void => {
   try {
-    localStorage.setItem('fateWorlds', JSON.stringify(worlds));
+    // Ensure we don't have duplicate IDs before saving
+    const uniqueWorlds = worlds.reduce((acc, current) => {
+      const x = acc.find(item => item.id === current.id);
+      if (!x) {
+        return [...acc, current];
+      } else {
+        return acc;
+      }
+    }, [] as World[]);
+    
+    localStorage.setItem('fateWorlds', JSON.stringify(uniqueWorlds));
   } catch (error) {
     console.error('Error saving worlds to localStorage:', error);
   }
@@ -163,8 +187,13 @@ export const fetchEntitiesByWorldId = async (worldId: string, type?: EntityType)
 };
 
 export const createWorld = async (userId: string, name: string): Promise<World> => {
+  // Generate a truly unique ID with timestamp component
+  const timestamp = new Date().getTime();
+  const randomStr = Math.random().toString(36).substring(2, 8);
+  const newId = `world_${timestamp}_${randomStr}`;
+  
   const newWorld = {
-    id: Math.random().toString(36).substr(2, 9),
+    id: newId,
     name,
     createdAt: new Date().toISOString(),
     synopsis: '',
