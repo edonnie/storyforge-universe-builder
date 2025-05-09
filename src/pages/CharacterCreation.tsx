@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
@@ -16,6 +15,36 @@ import CharacterPersonality from '../components/character/CharacterPersonality';
 // API Base URL
 const API_BASE_URL = "https://fateengine-server.onrender.com";
 
+interface Ability {
+  name: string;
+  description: string;
+  cooldown?: string;
+  cost?: string;
+}
+
+interface CharacterData {
+  id: string;
+  worldId: string;
+  name: string;
+  race: string;
+  role: string;
+  description: string;
+  background: string;
+  traits: {
+    appearance: string;
+    personality: string;
+    ideals: string;
+    bonds: string;
+    flaws: string;
+  };
+  stats: Array<{
+    name: string;
+    value: number;
+  }>;
+  abilities: Ability[];
+  image: string;
+}
+
 const CharacterCreation = () => {
   const { worldId, characterId } = useParams<{ worldId: string; characterId: string }>();
   const navigate = useNavigate();
@@ -25,7 +54,7 @@ const CharacterCreation = () => {
   const [activeTab, setActiveTab] = useState('basics');
   
   // Character data state
-  const [character, setCharacter] = useState({
+  const [character, setCharacter] = useState<CharacterData>({
     id: characterId || `char_${Date.now()}`,
     worldId: worldId || '',
     name: '',
@@ -218,7 +247,7 @@ const CharacterCreation = () => {
           >
             Cancel
           </Button>
-          <Button onClick={handleSave} loading={isSaving}>
+          <Button onClick={handleSave} disabled={isSaving}>
             {isSaving ? 'Saving...' : 'Save Character'}
           </Button>
         </div>
@@ -374,12 +403,14 @@ const CharacterCreation = () => {
                 }
               }));
             }}
+            personality={{ mbti: '', enneagram: '', alignment: '', traits: '' }}
+            onSaveField={async () => {}}
           />
         </TabsContent>
         
         <TabsContent value="abilities">
           <CharacterAbilities 
-            abilities={character.abilities || []} 
+            abilities={character.abilities} 
             onChange={(abilities) => {
               setCharacter(prev => ({
                 ...prev,
