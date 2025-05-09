@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ArrowLeft, Plus, Send } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { parseStructuredOutput } from "../../utils/parseUtils";
+import { parseStructuredOutput, detectOutputType } from "../../utils/parseUtils";
 import { Character } from "../character/CharacterSheet";
 
 // Define the API base URL
@@ -99,14 +99,26 @@ const ChatSection = ({
       
       // Parse the response
       const data = await response.json();
-      const aiMessage = { role: "assistant" as const, content: data.response };
+      const botResponse = data.response;
       
-      // Add assistant message to chat - always show the complete response
-      setChatMessages([...newMessages, aiMessage]);
+      // Check if it's a character sheet
+      const isCharacterSheet = detectOutputType(botResponse) === "character";
       
-      // Parse structured output and update character
-      const updatedCharacter = parseStructuredOutput(data.response, character);
-      setCharacter(updatedCharacter);
+      // Add a concise message to chat instead of the full character sheet
+      if (isCharacterSheet) {
+        // Find a summary line or use a default message
+        const summary = "Character details updated!";
+        setChatMessages([...newMessages, { role: "assistant", content: summary }]);
+      } else {
+        // For non-character responses, show the full message
+        setChatMessages([...newMessages, { role: "assistant", content: botResponse }]);
+      }
+      
+      // If it's a character sheet, parse the data and update the character
+      if (isCharacterSheet) {
+        const updatedCharacter = parseStructuredOutput(botResponse, character);
+        setCharacter(updatedCharacter);
+      }
       
     } catch (error) {
       console.error('Error calling generate API:', error);
