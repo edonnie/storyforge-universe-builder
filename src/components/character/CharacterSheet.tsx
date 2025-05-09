@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -71,15 +72,21 @@ const CharacterSheet = ({ character, onSaveField }: CharacterSheetProps) => {
   const navigate = useNavigate();
 
   const handlePreviewExport = () => {
-    // Navigate to the preview page
-    if (character && character.id) {
-      // Extract worldId from URL
-      const pathParts = window.location.pathname.split('/');
-      const worldIdIndex = pathParts.indexOf('worlds') + 1;
-      const worldId = pathParts[worldIdIndex];
-      
-      navigate(`/worlds/${worldId}/characters/${character.id}`);
+    // Ensure the character has an ID
+    if (!character || !character.id) {
+      console.error("Cannot navigate to preview: character ID is missing");
+      return;
     }
+    
+    // Extract worldId from URL or use a default
+    const pathParts = window.location.pathname.split('/');
+    const worldIdIndex = pathParts.indexOf('worlds') + 1;
+    const worldId = worldIdIndex > 0 && worldIdIndex < pathParts.length 
+      ? pathParts[worldIdIndex] 
+      : '1'; // Default to '1' if not found
+    
+    // Navigate to the preview page with proper URL construction
+    navigate(`/worlds/${worldId}/characters/${character.id}`);
   };
 
   return (

@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -100,13 +101,22 @@ const ChatSection = ({
       const data = await response.json();
       const botResponse = data.response;
       
-      // Always add the full bot response to chat messages, with no summaries
-      setChatMessages([...newMessages, { role: "assistant", content: botResponse }]);
+      // Check if it's a character sheet
+      const isCharacterSheet = detectOutputType(botResponse) === "character";
       
-      // If it's a character sheet, parse the data and update the character
-      if (detectOutputType(botResponse) === "character") {
+      if (isCharacterSheet) {
+        // Extract just the first line (the natural introduction) from the response
+        const firstLine = botResponse.split('\n')[0];
+        
+        // Add only that first line to chat messages
+        setChatMessages([...newMessages, { role: "assistant", content: firstLine }]);
+        
+        // Parse the full response to update the character
         const updatedCharacter = parseStructuredOutput(botResponse, character);
         setCharacter(updatedCharacter);
+      } else {
+        // For non-character responses, show the full message
+        setChatMessages([...newMessages, { role: "assistant", content: botResponse }]);
       }
       
     } catch (error) {

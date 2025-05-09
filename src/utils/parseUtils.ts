@@ -29,7 +29,7 @@ export const parseStructuredOutput = (text: string, character: Character): Chara
 
   // Helper to extract text content for any labeled section
   const extractSectionContent = (labelText: string): string => {
-    const stopLabels = "NAME|RACE|JOBS|ROLE|PARENTS|STATS|PERSONALITY|BIOGRAPHY|ABILITIES|EQUIPMENT & STYLE|NOTES|RELATIONSHIPS";
+    const stopLabels = "NAME|RACE|JOBS|ROLE|PARENTS|STATS|PERSONALITY|BIOGRAPHY|BIO|ABILITIES|EQUIPMENT & STYLE|EQUIPMENT|NOTES|RELATIONSHIPS";
     const regex = new RegExp(`${labelText}:\\s*([\\s\\S]*?)(?=\\n\\s*(?:${stopLabels}):\\s*|$)`, 'is');
     const match = text.match(regex);
     return match && match[1] ? match[1].trim() : "";
@@ -88,8 +88,8 @@ export const parseStructuredOutput = (text: string, character: Character): Chara
     if (ennegramMatch) updatedCharacter.personality.enneagram = ennegramMatch[1].trim();
     if (alignmentMatch) updatedCharacter.personality.alignment = alignmentMatch[1].trim();
     
-    // Extract traits, ensuring it stops at the next header in the document
-    const traitsMatch = personalityBlock.match(/TRAITS:\s*([\s\S]*?)(?=\n\s*(?:BIOGRAPHY|NOTES|RELATIONSHIPS|STATS|ABILITIES):|$)/i);
+    // Extract traits, stopping at the next section header
+    const traitsMatch = personalityBlock.match(/TRAITS:\s*([\s\S]*?)(?=\n[A-Z ]+:|$)/i);
     if (traitsMatch) {
       updatedCharacter.personality.traits = traitsMatch[1].trim();
     }
