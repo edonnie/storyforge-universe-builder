@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
@@ -132,19 +131,13 @@ const CharacterCreation = () => {
     if (name.includes('.')) {
       // For nested properties like traits.appearance
       const [parent, child] = name.split('.');
-      setCharacter(prev => {
-        // Create a shallow copy of the previous character
-        const newCharacter = { ...prev };
-        
-        // Create a copy of the nested object and update it
-        const parentObject = { ...(prev[parent as keyof CharacterData] as Record<string, any>) };
-        parentObject[child] = value;
-        
-        // Update the parent property in the new character object
-        newCharacter[parent as keyof CharacterData] = parentObject as any;
-        
-        return newCharacter;
-      });
+      setCharacter(prev => ({
+        ...prev,
+        [parent]: {
+          ...prev[parent as keyof typeof prev],
+          [child]: value
+        }
+      }));
     } else {
       setCharacter(prev => ({
         ...prev,
