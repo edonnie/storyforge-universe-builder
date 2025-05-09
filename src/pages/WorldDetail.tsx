@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import Layout from '../components/Layout';
@@ -320,7 +321,10 @@ const WorldDetail = () => {
             <TabsContent value="characters" className="mt-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-semibold">Characters</h3>
-                <Button onClick={handleCreateCharacter}>
+                <Button 
+                  onClick={handleCreateCharacter}
+                  className="bg-blue-500 hover:bg-blue-600 text-white"
+                >
                   <Plus size={16} className="mr-2" /> Create Character
                 </Button>
               </div>
@@ -363,7 +367,7 @@ const WorldDetail = () => {
           </Tabs>
         </div>
         
-        {/* Timeline Section - Redesigned for compactness and better style */}
+        {/* Timeline Section */}
         <div className="mt-8">
           <Card className="bg-black/40 border border-gray-800">
             <CardHeader className="flex flex-row items-center justify-between py-4">
