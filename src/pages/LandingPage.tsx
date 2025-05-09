@@ -11,9 +11,11 @@ const LandingPage = () => {
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('signup');
   const navigate = useNavigate();
   
-  // Temporary login function, will redirect to dashboard
+  // Login function that redirects to dashboard
   const handleLogin = () => {
     // Mock successful login
+    localStorage.setItem('fateengine_session', 'true');
+    localStorage.setItem('fateToken', 'mock_token_' + Date.now());
     navigate('/dashboard');
   };
   

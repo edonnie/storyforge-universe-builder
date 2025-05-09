@@ -8,7 +8,7 @@ import { Character } from "../components/character/CharacterSheet";
  */
 export const detectOutputType = (text: string): "character" | null => {
   // More robust detection that looks for multiple key sections
-  const characterSectionKeywords = /(?:NAME|RACE|JOBS|ROLE|CLASS|BIOGRAPHY|BIO|PERSONALITY):/im;
+  const characterSectionKeywords = /(?:NAME|RACE|JOBS|ROLE|CLASS|BIOGRAPHY|BIO|PERSONALITY|STATS):/im;
   return characterSectionKeywords.test(text) ? "character" : null;
 };
 
@@ -46,18 +46,29 @@ export const parseStructuredOutput = (text: string, character: Character): Chara
     return "";
   };
 
-  // Helper to extract stat number, defaults to the existing value or empty string
-  const extractStat = (statLabel: string): string => {
-    // Create a more flexible regex that can handle different formats
-    const regex = new RegExp(`${statLabel}(?:\\s*:|:?\\s*)\\s*(\\d+)`, 'i');
-    const match = text.match(regex);
+  // Helper to extract stats using multiple patterns
+  const extractStat = (statLabel: string, fallbackLabels: string[] = []): string => {
+    // Try to find the stat in different formats
+    const allLabels = [statLabel, ...fallbackLabels];
     
-    if (match && match[1]) {
-      console.log(`Extracted ${statLabel}:`, match[1].trim());
-      return match[1].trim();
+    for (const label of allLabels) {
+      // Try various formats like "HP: 100", "HP - 100", "HP 100"
+      const patterns = [
+        new RegExp(`${label}(?:\\s*:|:?\\s*)\\s*(\\d+)`, 'i'),
+        new RegExp(`${label}\\s*[-–—]\\s*(\\d+)`, 'i'),
+        new RegExp(`${label}\\s+(\\d+)`, 'i')
+      ];
+      
+      for (const pattern of patterns) {
+        const match = text.match(pattern);
+        if (match && match[1]) {
+          console.log(`Extracted ${label}:`, match[1].trim());
+          return match[1].trim();
+        }
+      }
     }
     
-    return updatedCharacter.stats[statLabel.toLowerCase()] || "";
+    return "";
   };
 
   // Parse basic fields with fallbacks to alternative labels
@@ -137,43 +148,61 @@ export const parseStructuredOutput = (text: string, character: Character): Chara
     }
   }
 
-  // Parse stats with fallbacks to alternative names
+  // Enhanced stats parsing - define stat mappings with alternative names
   const statMapping = {
-    "HP": ["HP", "HEALTH", "HIT POINTS"],
-    "MP": ["MP", "MANA", "MAGIC POINTS"],
-    "physAttack": ["PHYS ATTACK", "PHYSICAL ATTACK", "STR", "STRENGTH"],
-    "physDefense": ["PHYS DEFENSE", "PHYSICAL DEFENSE", "CON", "CONSTITUTION"],
-    "agility": ["AGILITY", "AGI", "DEX", "DEXTERITY"],
-    "magicAttack": ["MAGIC ATTACK", "MAG ATTACK", "INT", "INTELLIGENCE"],
-    "magicDefense": ["MAGIC DEFENSE", "MAG DEFENSE", "WIS", "WISDOM"],
+    "hp": ["HP", "HEALTH", "HIT POINTS"],
+    "mp": ["MP", "MANA", "MAGIC POINTS"],
+    "physAttack": ["PHYS ATTACK", "PHYSICAL ATTACK", "STR", "STRENGTH", "ATK"],
+    "physDefense": ["PHYS DEFENSE", "PHYSICAL DEFENSE", "CON", "CONSTITUTION", "DEF"],
+    "agility": ["AGILITY", "AGI", "DEX", "DEXTERITY", "SPEED"],
+    "magicAttack": ["MAGIC ATTACK", "MAG ATTACK", "INT", "INTELLIGENCE", "M-ATK"],
+    "magicDefense": ["MAGIC DEFENSE", "MAG DEFENSE", "WIS", "WISDOM", "M-DEF"],
     "resist": ["RESIST", "RESISTANCE", "RES"]
   };
 
   // Extract stats from a dedicated STATS section if available
   const statsSection = extractSectionContent("STATS");
-  if (statsSection) {
-    console.log("Parsing stats section:", statsSection);
+  
+  // Process each stat
+  for (const [statKey, statLabels] of Object.entries(statMapping)) {
+    let statValue = "";
     
-    // Try to find each stat within the stats section
-    for (const [statKey, statLabels] of Object.entries(statMapping)) {
+    // First try to find the stat in the dedicated stats section
+    if (statsSection) {
       for (const label of statLabels) {
-        const statMatch = statsSection.match(new RegExp(`${label}(?:\\s*:|:?\\s*)\\s*(\\d+)`, 'i'));
-        if (statMatch && statMatch[1]) {
-          updatedCharacter.stats[statKey] = statMatch[1].trim();
+        const patterns = [
+          new RegExp(`${label}(?:\\s*:|:?\\s*)\\s*(\\d+)`, 'i'),
+          new RegExp(`${label}\\s*[-–—]\\s*(\\d+)`, 'i'),
+          new RegExp(`${label}\\s+(\\d+)`, 'i')
+        ];
+        
+        for (const pattern of patterns) {
+          const match = statsSection.match(pattern);
+          if (match && match[1]) {
+            statValue = match[1].trim();
+            break;
+          }
+        }
+        
+        if (statValue) break;
+      }
+    }
+    
+    // If not found in stats section, try in the full text
+    if (!statValue) {
+      for (const label of statLabels) {
+        const extractedVal = extractStat(label);
+        if (extractedVal) {
+          statValue = extractedVal;
           break;
         }
       }
     }
-  } else {
-    // Fallback to searching for stats in the entire text
-    for (const [statKey, statLabels] of Object.entries(statMapping)) {
-      for (const label of statLabels) {
-        const statValue = extractStat(label);
-        if (statValue) {
-          updatedCharacter.stats[statKey] = statValue;
-          break;
-        }
-      }
+    
+    // Update the character with the found stat value
+    if (statValue) {
+      console.log(`Setting stat ${statKey} to:`, statValue);
+      updatedCharacter.stats[statKey] = statValue;
     }
   }
 

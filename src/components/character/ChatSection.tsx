@@ -118,8 +118,14 @@ const ChatSection = ({
       const data = await response.json();
       const botResponse = data.response;
       
-      // Always add the full response to the chat messages
-      const updatedMessages = [...newMessages, { role: "assistant", content: botResponse }];
+      // Extract first line for display in chat
+      const displayResponse = extractFirstLine(botResponse);
+      
+      // Add the assistant message with only the first line visible in chat
+      const updatedMessages: ChatMessage[] = [
+        ...newMessages, 
+        { role: "assistant" as const, content: displayResponse }
+      ];
       setChatMessages(updatedMessages);
       
       // Check if it's a character sheet and update if so
@@ -129,6 +135,9 @@ const ChatSection = ({
         const updatedCharacter = parseStructuredOutput(botResponse, character);
         console.log("Updated character:", updatedCharacter);
         setCharacter(updatedCharacter);
+        
+        // Store the full response in localStorage for reference
+        localStorage.setItem('lastFullResponse', botResponse);
       }
       
     } catch (error) {
@@ -137,12 +146,26 @@ const ChatSection = ({
       // Show error message
       setChatMessages([
         ...newMessages,
-        { role: "assistant", content: `⚠️ Error: Could not connect to the server. Please try again later.` }
+        { role: "assistant" as const, content: `⚠️ Error: Could not connect to the server. Please try again later.` }
       ]);
     } finally {
       setIsLoading(false);
       setIsTyping(false);
     }
+  };
+
+  // Extract just the first line or short greeting from a bot response
+  const extractFirstLine = (text: string): string => {
+    // Try to find first line that's relatively short (likely a greeting)
+    const lines = text.split('\n');
+    
+    // If first line is short (likely a greeting), just return that
+    if (lines[0] && lines[0].length < 50 && !lines[0].includes(':')) {
+      return lines[0];
+    }
+    
+    // Default to a simple response if no good first line is found
+    return "Here's your character!";
   };
   
   const handleNewChat = () => {
@@ -197,6 +220,7 @@ const ChatSection = ({
     // Clear saved chat history
     localStorage.removeItem('chatHistory');
     localStorage.removeItem('currentCharacter');
+    localStorage.removeItem('lastFullResponse');
   };
   
   return (

@@ -78,10 +78,12 @@ const EditableField: React.FC<EditableFieldProps> = ({
 
   return (
     <div
-      className={`cursor-text min-h-[2em] ${className} ${!value && 'text-muted-foreground'}`}
+      className={`cursor-text min-h-[2em] ${className}`}
       onClick={() => setIsEditing(true)}
     >
-      {value || (placeholder && <span className="text-muted-foreground">{placeholder}</span>)}
+      {value || (
+        <span className="text-muted-foreground">{placeholder}</span>
+      )}
     </div>
   );
 };

@@ -11,10 +11,10 @@ const Index = () => {
     
     if (token) {
       // If logged in, redirect to dashboard
-      navigate('/dashboard');
+      navigate('/dashboard', { replace: true });
     } else {
       // If not logged in, redirect to landing page
-      navigate('/');
+      navigate('/', { replace: true });
     }
   }, [navigate]);
 

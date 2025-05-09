@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Menu, X, User, LogOut } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,7 @@ const Header = () => {
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [isLoggedIn, setIsLoggedIn] = useState(false); // Temporary state, will be replaced with Supabase auth
   const [subscriptionPlan, setSubscriptionPlan] = useState<'free' | 'pro'>('free'); // Mock subscription plan
+  const navigate = useNavigate();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   
@@ -30,17 +31,26 @@ const Header = () => {
     setIsLoggedIn(true);
     setIsAuthModalOpen(false);
     
+    // Store session info
+    localStorage.setItem('fateengine_session', 'true');
+    localStorage.setItem('fateToken', 'mock_token_' + Date.now());
+    
     // Mock fetching user subscription from Supabase
     setTimeout(() => {
       // Mock data - in real app, this would come from Supabase
       setSubscriptionPlan('pro');
     }, 500);
+    
+    // Redirect to dashboard after successful login
+    navigate('/dashboard');
   };
 
   // Temporary logout function, will be replaced with Supabase auth
   const handleLogout = () => {
     setIsLoggedIn(false);
     setSubscriptionPlan('free');
+    localStorage.removeItem('fateengine_session');
+    localStorage.removeItem('fateToken');
   };
   
   // Check session on component mount (would use Supabase in real implementation)
