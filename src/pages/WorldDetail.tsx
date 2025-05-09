@@ -1,3 +1,5 @@
+import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -273,7 +275,7 @@ const WorldDetail = () => {
               <h2 className="text-xl font-semibold">Your Realms</h2>
               <Button 
                 size="sm" 
-                onClick={() => window.location.href = /worlds/${worldId}/realms/create}
+                onClick={() => window.location.href = `/worlds/${worldId}/realms/create`}
                 className="bg-blue-500 hover:bg-blue-600 text-white"
               >
                 <Plus size={16} className="mr-2" /> Create Realm
@@ -314,7 +316,7 @@ const WorldDetail = () => {
               <h2 className="text-xl font-semibold">Your Locations</h2>
               <Button 
                 size="sm" 
-                onClick={() => window.location.href = /worlds/${worldId}/locations/create}
+                onClick={() => window.location.href = `/worlds/${worldId}/locations/create`}
                 className="bg-blue-500 hover:bg-blue-600 text-white"
               >
                 <Plus size={16} className="mr-2" /> Create Location
@@ -355,7 +357,7 @@ const WorldDetail = () => {
               <h2 className="text-xl font-semibold">Your Factions</h2>
               <Button 
                 size="sm" 
-                onClick={() => window.location.href = /worlds/${worldId}/factions/create}
+                onClick={() => window.location.href = `/worlds/${worldId}/factions/create`}
                 className="bg-blue-500 hover:bg-blue-600 text-white"
               >
                 <Plus size={16} className="mr-2" /> Create Faction
@@ -396,7 +398,7 @@ const WorldDetail = () => {
               <h2 className="text-xl font-semibold">Your Characters</h2>
               <Button 
                 size="sm" 
-                onClick={() => window.location.href = /worlds/${worldId}/characters/create}
+                onClick={() => window.location.href = `/worlds/${worldId}/characters/create`}
                 className="bg-blue-500 hover:bg-blue-600 text-white"
               >
                 <Plus size={16} className="mr-2" /> Create Character
@@ -445,7 +447,7 @@ const WorldDetail = () => {
               <h2 className="text-xl font-semibold">Your Items</h2>
               <Button 
                 size="sm" 
-                onClick={() => window.location.href = /worlds/${worldId}/items/create}
+                onClick={() => window.location.href = `/worlds/${worldId}/items/create`}
                 className="bg-blue-500 hover:bg-blue-600 text-white"
               >
                 <Plus size={16} className="mr-2" /> Create Item
@@ -643,5 +645,3 @@ const WorldDetail = () => {
 };
 
 export default WorldDetail;
-
-
