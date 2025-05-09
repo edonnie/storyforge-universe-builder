@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
@@ -34,11 +35,6 @@ const Dashboard = () => {
   const filteredWorlds = worlds.filter(world => 
     world.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
-  
-  // Handle world deletion
-  const handleDeleteWorld = (worldId: string) => {
-    setWorlds(worlds.filter(world => world.id !== worldId));
-  };
   
   // Check authentication and load user data
   useEffect(() => {
@@ -257,7 +253,6 @@ const Dashboard = () => {
                   id={world.id}
                   name={world.name}
                   createdAt={world.createdAt}
-                  onDelete={() => handleDeleteWorld(world.id)}
                 />
               ))}
             </div>
