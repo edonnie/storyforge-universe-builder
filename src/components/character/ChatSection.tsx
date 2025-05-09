@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -101,21 +100,11 @@ const ChatSection = ({
       const data = await response.json();
       const botResponse = data.response;
       
-      // Check if it's a character sheet
-      const isCharacterSheet = detectOutputType(botResponse) === "character";
-      
-      // Add a concise message to chat instead of the full character sheet
-      if (isCharacterSheet) {
-        // Find a summary line or use a default message
-        const summary = "Character details updated!";
-        setChatMessages([...newMessages, { role: "assistant", content: summary }]);
-      } else {
-        // For non-character responses, show the full message
-        setChatMessages([...newMessages, { role: "assistant", content: botResponse }]);
-      }
+      // Always add the full bot response to chat messages, with no summaries
+      setChatMessages([...newMessages, { role: "assistant", content: botResponse }]);
       
       // If it's a character sheet, parse the data and update the character
-      if (isCharacterSheet) {
+      if (detectOutputType(botResponse) === "character") {
         const updatedCharacter = parseStructuredOutput(botResponse, character);
         setCharacter(updatedCharacter);
       }

@@ -29,7 +29,7 @@ export const parseStructuredOutput = (text: string, character: Character): Chara
 
   // Helper to extract text content for any labeled section
   const extractSectionContent = (labelText: string): string => {
-    const stopLabels = "NAME|RACE|JOBS|ROLE|PARENTS|PERSONALITY|BIO|BIOGRAPHY|EQUIPMENT|WEAPON|ARMOR|STYLE|STATS|ABILITIES|MAIN ABILITY|SIGNATURE SKILLS|PASSIVES|NOTES|RELATIONSHIPS";
+    const stopLabels = "NAME|RACE|JOBS|ROLE|PARENTS|STATS|PERSONALITY|BIOGRAPHY|ABILITIES|EQUIPMENT & STYLE|NOTES|RELATIONSHIPS";
     const regex = new RegExp(`${labelText}:\\s*([\\s\\S]*?)(?=\\n\\s*(?:${stopLabels}):\\s*|$)`, 'is');
     const match = text.match(regex);
     return match && match[1] ? match[1].trim() : "";
@@ -52,14 +52,19 @@ export const parseStructuredOutput = (text: string, character: Character): Chara
   updatedCharacter.notes = extractSectionContent("NOTES");
   updatedCharacter.relationships = extractSectionContent("RELATIONSHIPS");
 
-  // Handle equipment - try direct sections first, then fallback to extracting from combined section
-  const equipmentSection = extractSectionContent("EQUIPMENT");
-  updatedCharacter.equipment.weapon = extractSectionContent("WEAPON") || 
-    (equipmentSection && equipmentSection.match(/(?:WEAPON|WEAPONS):?\s*([^,\n]+)/i)?.[1]?.trim() || '');
+  // Parse equipment section
+  const equipmentSection = extractSectionContent("EQUIPMENT") || extractSectionContent("EQUIPMENT & STYLE");
+  if (equipmentSection) {
+    const weaponMatch = equipmentSection.match(/(?:WEAPON|WEAPONS):?\s*([^,\n]+)/i);
+    const armorMatch = equipmentSection.match(/(?:ARMOR|ARMORS|ARMOUR):?\s*([^,\n]+)/i);
     
-  updatedCharacter.equipment.armor = extractSectionContent("ARMOR") || 
-    (equipmentSection && equipmentSection.match(/(?:ARMOR|ARMORS|ARMOUR):?\s*([^,\n]+)/i)?.[1]?.trim() || '');
-
+    if (weaponMatch) updatedCharacter.equipment.weapon = weaponMatch[1].trim();
+    if (armorMatch) updatedCharacter.equipment.armor = armorMatch[1].trim();
+  }
+  
+  // Direct section extraction as fallback
+  updatedCharacter.equipment.weapon = updatedCharacter.equipment.weapon || extractSectionContent("WEAPON");
+  updatedCharacter.equipment.armor = updatedCharacter.equipment.armor || extractSectionContent("ARMOR");
   updatedCharacter.style = extractSectionContent("STYLE");
 
   // Parse stats
@@ -83,8 +88,8 @@ export const parseStructuredOutput = (text: string, character: Character): Chara
     if (ennegramMatch) updatedCharacter.personality.enneagram = ennegramMatch[1].trim();
     if (alignmentMatch) updatedCharacter.personality.alignment = alignmentMatch[1].trim();
     
-    // Extract traits, ensuring it stops at the next header
-    const traitsMatch = personalityBlock.match(/TRAITS:\s*([\s\S]*?)(?=\n[A-Z ]+:\s*|$)/i);
+    // Extract traits, ensuring it stops at the next header in the document
+    const traitsMatch = personalityBlock.match(/TRAITS:\s*([\s\S]*?)(?=\n\s*(?:BIOGRAPHY|NOTES|RELATIONSHIPS|STATS|ABILITIES):|$)/i);
     if (traitsMatch) {
       updatedCharacter.personality.traits = traitsMatch[1].trim();
     }
