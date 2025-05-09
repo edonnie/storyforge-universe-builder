@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
@@ -10,12 +9,15 @@ const LandingPage = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('signup');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isPro, setIsPro] = useState(false);
   const navigate = useNavigate();
   
   // Check login status on component mount
   useEffect(() => {
     const token = localStorage.getItem('fateToken');
+    const userIsPro = localStorage.getItem('fateengine_pro') === 'true';
     setIsLoggedIn(!!token);
+    setIsPro(userIsPro);
   }, []);
   
   // Login function that redirects to dashboard

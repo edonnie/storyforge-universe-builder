@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import WorldCard from '../components/WorldCard';
 import CreateWorldModal from '../components/CreateWorldModal';
@@ -19,6 +19,17 @@ const Dashboard = () => {
   const [worlds, setWorlds] = useState(initialWorlds);
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isPro, setIsPro] = useState(false);
+  
+  // Check login and subscription status
+  useEffect(() => {
+    const hasSession = localStorage.getItem('fateengine_session') === 'true';
+    const userIsPro = localStorage.getItem('fateengine_pro') === 'true';
+    
+    setIsLoggedIn(hasSession);
+    setIsPro(userIsPro);
+  }, []);
   
   // Filter worlds based on search term
   const filteredWorlds = worlds.filter(world => 
@@ -39,7 +50,7 @@ const Dashboard = () => {
   const stats = {
     totalWorlds: worlds.length,
     totalEntities: 24,
-    subscriptionType: 'Free',
+    subscriptionType: isPro ? 'Pro' : 'Free',
   };
   
   return (
@@ -112,7 +123,7 @@ const Dashboard = () => {
                 
                 <div className="pt-4">
                   <Button className="w-full" variant="outline">
-                    Upgrade to Pro
+                    {isLoggedIn && isPro ? "Manage Billing" : "Upgrade to Pro"}
                   </Button>
                 </div>
               </div>
