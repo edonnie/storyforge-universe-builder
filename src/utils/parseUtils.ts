@@ -8,7 +8,7 @@ import { Character } from "../components/character/CharacterSheet";
  */
 export const detectOutputType = (text: string): "character" | null => {
   // More robust detection that looks for multiple key sections
-  const characterSectionKeywords = /^(?:NAME|RACE|JOBS|ROLE|CLASS|BIOGRAPHY|BIO|PERSONALITY):/im;
+  const characterSectionKeywords = /(?:NAME|RACE|JOBS|ROLE|CLASS|BIOGRAPHY|BIO|PERSONALITY):/im;
   return characterSectionKeywords.test(text) ? "character" : null;
 };
 
@@ -19,6 +19,8 @@ export const detectOutputType = (text: string): "character" | null => {
  * @returns Updated character object
  */
 export const parseStructuredOutput = (text: string, character: Character): Character => {
+  console.log("Parsing structured output:", text);
+  
   // Check if we have a character output
   if (!detectOutputType(text)) {
     console.warn("Input is not a recognized character output, skipping update.");
@@ -32,27 +34,56 @@ export const parseStructuredOutput = (text: string, character: Character): Chara
   const extractSectionContent = (labelText: string): string => {
     // Include all possible section headers to properly detect section boundaries
     const stopLabels = "NAME|RACE|JOBS|ROLE|CLASS|PARENTS|STATS|PERSONALITY|BIOGRAPHY|BIO|ABILITIES|EQUIPMENT & STYLE|EQUIPMENT|NOTES|RELATIONSHIPS|WEAPON|ARMOR|STYLE|MAIN ABILITY|SIGNATURE SKILLS|PASSIVES";
-    const regex = new RegExp(`${labelText}:\\s*([\\s\\S]*?)(?=\\n\\s*(?:${stopLabels}):\\s*|$)`, 'is');
+    
+    // Create case-insensitive regex to match the section
+    const regex = new RegExp(`${labelText}:\\s*([\\s\\S]*?)(?=\\n\\s*(?:${stopLabels}):\\s*|$)`, 'i');
     const match = text.match(regex);
-    return match && match[1] ? match[1].trim() : "";
+    
+    if (match && match[1]) {
+      console.log(`Extracted ${labelText}:`, match[1].trim());
+      return match[1].trim();
+    }
+    return "";
   };
 
   // Helper to extract stat number, defaults to the existing value or empty string
   const extractStat = (statLabel: string): string => {
-    const regex = new RegExp(`${statLabel}:\\s*(\\d+)`, 'i');
+    // Create a more flexible regex that can handle different formats
+    const regex = new RegExp(`${statLabel}(?:\\s*:|:?\\s*)\\s*(\\d+)`, 'i');
     const match = text.match(regex);
-    return match && match[1] ? match[1].trim() : updatedCharacter.stats[statLabel.toLowerCase()] || "";
+    
+    if (match && match[1]) {
+      console.log(`Extracted ${statLabel}:`, match[1].trim());
+      return match[1].trim();
+    }
+    
+    return updatedCharacter.stats[statLabel.toLowerCase()] || "";
   };
 
   // Parse basic fields with fallbacks to alternative labels
-  updatedCharacter.name = extractSectionContent("NAME");
-  updatedCharacter.race = extractSectionContent("RACE");
-  updatedCharacter.jobs = extractSectionContent("JOBS") || extractSectionContent("CLASS");
-  updatedCharacter.role = extractSectionContent("ROLE");
-  updatedCharacter.parents = extractSectionContent("PARENTS");
-  updatedCharacter.bio = extractSectionContent("BIO") || extractSectionContent("BIOGRAPHY");
-  updatedCharacter.notes = extractSectionContent("NOTES");
-  updatedCharacter.relationships = extractSectionContent("RELATIONSHIPS");
+  const name = extractSectionContent("NAME");
+  if (name) updatedCharacter.name = name;
+  
+  const race = extractSectionContent("RACE");
+  if (race) updatedCharacter.race = race;
+  
+  const jobs = extractSectionContent("JOBS") || extractSectionContent("CLASS");
+  if (jobs) updatedCharacter.jobs = jobs;
+  
+  const role = extractSectionContent("ROLE");
+  if (role) updatedCharacter.role = role;
+  
+  const parents = extractSectionContent("PARENTS");
+  if (parents) updatedCharacter.parents = parents;
+  
+  const bio = extractSectionContent("BIO") || extractSectionContent("BIOGRAPHY");
+  if (bio) updatedCharacter.bio = bio;
+  
+  const notes = extractSectionContent("NOTES");
+  if (notes) updatedCharacter.notes = notes;
+  
+  const relationships = extractSectionContent("RELATIONSHIPS");
+  if (relationships) updatedCharacter.relationships = relationships;
 
   // Parse equipment section with multiple approaches
   // First try dedicated sections
@@ -107,14 +138,44 @@ export const parseStructuredOutput = (text: string, character: Character): Chara
   }
 
   // Parse stats with fallbacks to alternative names
-  updatedCharacter.stats.hp = extractStat("HP") || extractStat("HEALTH") || extractStat("HIT POINTS");
-  updatedCharacter.stats.mp = extractStat("MP") || extractStat("MANA") || extractStat("MAGIC POINTS");
-  updatedCharacter.stats.physAttack = extractStat("PHYS ATTACK") || extractStat("PHYSICAL ATTACK") || extractStat("STR") || extractStat("STRENGTH");
-  updatedCharacter.stats.physDefense = extractStat("PHYS DEFENSE") || extractStat("PHYSICAL DEFENSE") || extractStat("CON") || extractStat("CONSTITUTION");
-  updatedCharacter.stats.agility = extractStat("AGILITY") || extractStat("AGI") || extractStat("DEX") || extractStat("DEXTERITY");
-  updatedCharacter.stats.magicAttack = extractStat("MAGIC ATTACK") || extractStat("MAG ATTACK") || extractStat("INT") || extractStat("INTELLIGENCE");
-  updatedCharacter.stats.magicDefense = extractStat("MAGIC DEFENSE") || extractStat("MAG DEFENSE") || extractStat("WIS") || extractStat("WISDOM");
-  updatedCharacter.stats.resist = extractStat("RESIST") || extractStat("RESISTANCE") || extractStat("RES");
+  const statMapping = {
+    "HP": ["HP", "HEALTH", "HIT POINTS"],
+    "MP": ["MP", "MANA", "MAGIC POINTS"],
+    "physAttack": ["PHYS ATTACK", "PHYSICAL ATTACK", "STR", "STRENGTH"],
+    "physDefense": ["PHYS DEFENSE", "PHYSICAL DEFENSE", "CON", "CONSTITUTION"],
+    "agility": ["AGILITY", "AGI", "DEX", "DEXTERITY"],
+    "magicAttack": ["MAGIC ATTACK", "MAG ATTACK", "INT", "INTELLIGENCE"],
+    "magicDefense": ["MAGIC DEFENSE", "MAG DEFENSE", "WIS", "WISDOM"],
+    "resist": ["RESIST", "RESISTANCE", "RES"]
+  };
+
+  // Extract stats from a dedicated STATS section if available
+  const statsSection = extractSectionContent("STATS");
+  if (statsSection) {
+    console.log("Parsing stats section:", statsSection);
+    
+    // Try to find each stat within the stats section
+    for (const [statKey, statLabels] of Object.entries(statMapping)) {
+      for (const label of statLabels) {
+        const statMatch = statsSection.match(new RegExp(`${label}(?:\\s*:|:?\\s*)\\s*(\\d+)`, 'i'));
+        if (statMatch && statMatch[1]) {
+          updatedCharacter.stats[statKey] = statMatch[1].trim();
+          break;
+        }
+      }
+    }
+  } else {
+    // Fallback to searching for stats in the entire text
+    for (const [statKey, statLabels] of Object.entries(statMapping)) {
+      for (const label of statLabels) {
+        const statValue = extractStat(label);
+        if (statValue) {
+          updatedCharacter.stats[statKey] = statValue;
+          break;
+        }
+      }
+    }
+  }
 
   // Parse personality
   const personalityBlock = extractSectionContent("PERSONALITY");
@@ -122,26 +183,26 @@ export const parseStructuredOutput = (text: string, character: Character): Chara
     console.log("Parsing personality block:", personalityBlock);
     
     // Extract MBTI, Enneagram, and Alignment with various formats
-    const mbtiMatch = personalityBlock.match(/(?:MBTI|TYPE):\s*([A-Z]{2,4})(?=\s|$|,)/i);
-    const ennegramMatch = personalityBlock.match(/(?:ENNEAGRAM):\s*([\d\w-]+)(?=\s|$|,)/i);
-    const alignmentMatch = personalityBlock.match(/(?:ALIGNMENT):\s*([A-Za-z ]+?)(?=\s*(?:TRAITS|MBTI|ENNEAGRAM|TYPE):|$|,)/i);
+    const mbtiMatch = personalityBlock.match(/(?:MBTI|TYPE)(?:\s*:|:?\s*)([A-Z]{2,4})(?=\s|$|,)/i);
+    const enneagramMatch = personalityBlock.match(/(?:ENNEAGRAM)(?:\s*:|:?\s*)([\d\w-]+)(?=\s|$|,)/i);
+    const alignmentMatch = personalityBlock.match(/(?:ALIGNMENT)(?:\s*:|:?\s*)([A-Za-z ]+?)(?=\s*(?:TRAITS|MBTI|ENNEAGRAM|TYPE):|$|,)/i);
     
     if (mbtiMatch) updatedCharacter.personality.mbti = mbtiMatch[1].trim();
-    if (ennegramMatch) updatedCharacter.personality.enneagram = ennegramMatch[1].trim();
+    if (enneagramMatch) updatedCharacter.personality.enneagram = enneagramMatch[1].trim();
     if (alignmentMatch) updatedCharacter.personality.alignment = alignmentMatch[1].trim();
     
     // Extract traits, stopping at the next section header
-    const traitsMatch = personalityBlock.match(/TRAITS:\s*([\s\S]*?)(?=\n[A-Z ]+:|$)/i);
+    const traitsMatch = personalityBlock.match(/TRAITS(?:\s*:|:?\s*)([\s\S]*?)(?=\n[A-Z ]+:|$)/i);
     if (traitsMatch) {
       updatedCharacter.personality.traits = traitsMatch[1].trim();
     } else if (personalityBlock) {
       // If no explicit traits section but we have personality data,
       // extract the remaining text after the defined parts as traits
       let remainingText = personalityBlock
-        .replace(/(?:MBTI|TYPE):\s*([A-Z]{2,4})(?=\s|$|,)/i, '')
-        .replace(/(?:ENNEAGRAM):\s*([\d\w-]+)(?=\s|$|,)/i, '')
-        .replace(/(?:ALIGNMENT):\s*([A-Za-z ]+?)(?=\s*(?:TRAITS|MBTI|ENNEAGRAM|TYPE):|$|,)/i, '')
-        .replace(/TRAITS:/i, '')
+        .replace(/(?:MBTI|TYPE)(?:\s*:|:?\s*)([A-Z]{2,4})(?=\s|$|,)/i, '')
+        .replace(/(?:ENNEAGRAM)(?:\s*:|:?\s*)([\d\w-]+)(?=\s|$|,)/i, '')
+        .replace(/(?:ALIGNMENT)(?:\s*:|:?\s*)([A-Za-z ]+?)(?=\s*(?:TRAITS|MBTI|ENNEAGRAM|TYPE):|$|,)/i, '')
+        .replace(/TRAITS(?:\s*:|:?\s*)/i, '')
         .trim();
       
       if (remainingText) {
@@ -156,15 +217,15 @@ export const parseStructuredOutput = (text: string, character: Character): Chara
     console.log("Parsing abilities block:", abilitiesBlock);
     
     // Try various label patterns for main ability
-    const mainAbilityMatch = abilitiesBlock.match(/(?:MAIN[\s_-]*ABILITY|SPECIAL[\s_-]*ABILITY|UNIQUE[\s_-]*ABILITY):\s*([^,\n]+)/i);
+    const mainAbilityMatch = abilitiesBlock.match(/(?:MAIN[\s_-]*ABILITY|SPECIAL[\s_-]*ABILITY|UNIQUE[\s_-]*ABILITY)(?:\s*:|:?\s*)([^,\n]+)/i);
     if (mainAbilityMatch) updatedCharacter.abilities.mainAbility = mainAbilityMatch[1].trim();
     
     // Try various label patterns for signature skills
-    const skillsMatch = abilitiesBlock.match(/(?:SIGNATURE[\s_-]*SKILLS|SKILLS|ACTIVE[\s_-]*SKILLS):\s*([\s\S]*?)(?=\s*(?:PASSIVE|UNIQUE|MAIN|$))/i);
+    const skillsMatch = abilitiesBlock.match(/(?:SIGNATURE[\s_-]*SKILLS|SKILLS|ACTIVE[\s_-]*SKILLS)(?:\s*:|:?\s*)([\s\S]*?)(?=\s*(?:PASSIVE|UNIQUE|MAIN|$))/i);
     if (skillsMatch) updatedCharacter.abilities.signatureSkills = skillsMatch[1].trim();
     
     // Try various label patterns for passives
-    const passivesMatch = abilitiesBlock.match(/(?:PASSIVE[\s_-]*(?:ABILITIES|SKILLS)|PASSIVES):\s*([\s\S]*?)$/i);
+    const passivesMatch = abilitiesBlock.match(/(?:PASSIVE[\s_-]*(?:ABILITIES|SKILLS)|PASSIVES)(?:\s*:|:?\s*)([\s\S]*?)$/i);
     if (passivesMatch) updatedCharacter.abilities.passives = passivesMatch[1].trim();
   } else {
     // Try direct section extraction if abilities block not found

@@ -6,8 +6,16 @@ const Index = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Redirect to the main landing page
-    navigate('/');
+    // Check if user is logged in (has a token)
+    const token = localStorage.getItem('fateToken');
+    
+    if (token) {
+      // If logged in, redirect to dashboard
+      navigate('/dashboard');
+    } else {
+      // If not logged in, redirect to landing page
+      navigate('/');
+    }
   }, [navigate]);
 
   return null;

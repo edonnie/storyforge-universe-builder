@@ -95,7 +95,7 @@ const CharacterSheet = ({ character, onSaveField }: CharacterSheetProps) => {
   return (
     <div className="hidden lg:block w-1/2 h-full overflow-hidden">
       <ScrollArea className="h-full">
-        <div className="p-6">
+        <div className="p-6 overflow-x-hidden">
           <Card id="character-sheet" className="bg-card border-none shadow-none">
             <CardHeader>
               <CardTitle>Character Sheet</CardTitle>

@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download, FileText, Upload } from 'lucide-react';
@@ -15,6 +15,7 @@ const CharacterPreview = () => {
   const [characterImage, setCharacterImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Try to load character data from localStorage
@@ -23,8 +24,7 @@ const CharacterPreview = () => {
     if (storedCharacter) {
       setCharacter(JSON.parse(storedCharacter));
       setLoading(false);
-      // Clear after loading to avoid stale data on next visit
-      localStorage.removeItem('previewCharacter');
+      // We no longer remove this from localStorage so we can return to it
       return;
     }
     
@@ -119,6 +119,15 @@ const CharacterPreview = () => {
       description: "Character image has been updated",
     });
   };
+  
+  // Custom back function to properly return to character creation
+  const handleBack = () => {
+    if (worldId) {
+      navigate(`/worlds/${worldId}/characters/create`);
+    } else {
+      window.history.back();
+    }
+  };
 
   // Convert stat value to percentage for Progress component
   const getStatPercentage = (value: string): number => {
@@ -132,7 +141,7 @@ const CharacterPreview = () => {
       <div className="container mx-auto py-6">
         <Button 
           variant="outline" 
-          onClick={() => window.history.back()}
+          onClick={handleBack}
           className="mb-4"
         >
           <ArrowLeft size={16} className="mr-2" /> Back

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 
@@ -21,6 +21,11 @@ const EditableField: React.FC<EditableFieldProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState(initialValue);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Update value when initialValue changes (e.g., from API)
+  useEffect(() => {
+    setValue(initialValue);
+  }, [initialValue]);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -76,7 +81,7 @@ const EditableField: React.FC<EditableFieldProps> = ({
       className={`cursor-text min-h-[2em] ${className} ${!value && 'text-muted-foreground'}`}
       onClick={() => setIsEditing(true)}
     >
-      {value || placeholder}
+      {value || (placeholder && <span className="text-muted-foreground">{placeholder}</span>)}
     </div>
   );
 };

@@ -9,7 +9,6 @@ const TypingIndicator = () => {
         <div className="w-2 h-2 rounded-full bg-foreground/70 animate-pulse delay-75"></div>
         <div className="w-2 h-2 rounded-full bg-foreground/70 animate-pulse delay-150"></div>
       </div>
-      <span className="ml-2 text-sm">Thinking...</span>
     </div>
   );
 };

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ArrowLeft, Plus, Send } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { parseStructuredOutput, detectOutputType } from "../../utils/parseUtils";
 import { Character } from "../character/CharacterSheet";
 import TypingIndicator from './TypingIndicator';
@@ -41,6 +41,7 @@ const ChatSection = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
   
   // Scroll to the bottom when messages change or typing state changes
   useEffect(() => {
@@ -49,6 +50,29 @@ const ChatSection = ({
       scrollArea.scrollTop = scrollArea.scrollHeight;
     }
   }, [chatMessages, isTyping]);
+
+  // Store chat history in localStorage when it changes
+  useEffect(() => {
+    if (chatMessages.length > 1) {  // Only save if there's actual conversation
+      localStorage.setItem('chatHistory', JSON.stringify(chatMessages));
+      // Also save the current character state
+      localStorage.setItem('currentCharacter', JSON.stringify(character));
+    }
+  }, [chatMessages, character]);
+  
+  // Load chat history on initial render
+  useEffect(() => {
+    const savedChatHistory = localStorage.getItem('chatHistory');
+    const savedCharacter = localStorage.getItem('currentCharacter');
+    
+    if (savedChatHistory) {
+      setChatMessages(JSON.parse(savedChatHistory));
+    }
+    
+    if (savedCharacter) {
+      setCharacter(JSON.parse(savedCharacter));
+    }
+  }, []);
   
   const handleMessageSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,22 +118,17 @@ const ChatSection = ({
       const data = await response.json();
       const botResponse = data.response;
       
-      // Check if it's a character sheet
-      const isCharacterSheet = detectOutputType(botResponse) === "character";
+      // Always add the full response to the chat messages
+      const updatedMessages = [...newMessages, { role: "assistant", content: botResponse }];
+      setChatMessages(updatedMessages);
       
-      if (isCharacterSheet) {
-        // Extract just the first line (the natural introduction) from the response
-        const firstLine = botResponse.split('\n')[0];
-        
-        // Add only that first line to chat messages
-        setChatMessages([...newMessages, { role: "assistant", content: firstLine }]);
-        
-        // Parse the full response to update the character
+      // Check if it's a character sheet and update if so
+      const isCharacterSheet = detectOutputType(botResponse);
+      if (isCharacterSheet === "character") {
+        console.log("Detected character sheet, updating character data");
         const updatedCharacter = parseStructuredOutput(botResponse, character);
+        console.log("Updated character:", updatedCharacter);
         setCharacter(updatedCharacter);
-      } else {
-        // For non-character responses, show the full message
-        setChatMessages([...newMessages, { role: "assistant", content: botResponse }]);
       }
       
     } catch (error) {
@@ -174,6 +193,10 @@ const ChatSection = ({
       notes: '',
       relationships: '',
     });
+    
+    // Clear saved chat history
+    localStorage.removeItem('chatHistory');
+    localStorage.removeItem('currentCharacter');
   };
   
   return (
@@ -198,8 +221,8 @@ const ChatSection = ({
       </div>
       
       {/* Chat area - Scrollable */}
-      <ScrollArea className="flex-1 px-4">
-        <div className="space-y-4 mb-4" ref={scrollAreaRef}>
+      <ScrollArea className="flex-1 px-4" ref={scrollAreaRef}>
+        <div className="space-y-4 mb-4">
           {chatMessages.map((message, index) => (
             <div 
               key={index} 
